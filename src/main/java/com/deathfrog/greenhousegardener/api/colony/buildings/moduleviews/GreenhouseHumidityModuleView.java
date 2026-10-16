@@ -6,7 +6,7 @@ import com.deathfrog.greenhousegardener.core.client.gui.modules.WindowHumidityMo
 import com.ldtteam.blockui.views.BOWindow;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-side module view for greenhouse humidity controls.
@@ -41,8 +41,8 @@ public class GreenhouseHumidityModuleView extends GreenhouseClimateItemModuleVie
      * @return icon resource location
      */
     @Override
-    public ResourceLocation getIconResourceLocation()
+    public Identifier getIconResourceLocation()
     {
-        return ResourceLocation.fromNamespaceAndPath("minecolonies", "textures/gui/modules/humidity.png");
+        return Identifier.fromNamespaceAndPath("minecolonies", "textures/gui/modules/humidity.png");
     }
 }

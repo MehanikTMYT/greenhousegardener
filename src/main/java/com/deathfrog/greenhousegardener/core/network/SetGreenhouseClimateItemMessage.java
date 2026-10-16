@@ -15,7 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -35,7 +35,7 @@ public record SetGreenhouseClimateItemMessage(BlockPos buildingPos, int moduleTy
 {
     @SuppressWarnings("null")
     public static final Type<SetGreenhouseClimateItemMessage> ID =
-        new Type<>(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "set_greenhouse_climate_item"));
+        new Type<>(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "set_greenhouse_climate_item"));
 
     @SuppressWarnings("null")
     public static final StreamCodec<RegistryFriendlyByteBuf, SetGreenhouseClimateItemMessage> STREAM_CODEC = StreamCodec.composite(

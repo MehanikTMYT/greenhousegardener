@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:cucumber"
-    },
-    {
-      "item": "greenhousegardener:apple_cider_vinegar"
-    }
+    "greenhousegardener:cucumber",
+    "greenhousegardener:apple_cider_vinegar"
   ],
   "result": {
     "count": 2,

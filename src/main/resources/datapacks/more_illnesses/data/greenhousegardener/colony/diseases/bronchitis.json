@@ -1,0 +1,10 @@
+{
+  "name": "disease.greenhousegardener.bronchitis",
+  "rarity": 15,
+  "items": [
+    {
+      "id": "greenhousegardener:mustard_poultice",
+      "count": 1
+    }
+  ]
+}

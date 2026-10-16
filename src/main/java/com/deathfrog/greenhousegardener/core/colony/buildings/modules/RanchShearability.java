@@ -7,6 +7,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.common.IShearable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -147,9 +148,11 @@ public final class RanchShearability
     @SuppressWarnings("null")
     public static void spawnDrop(final Animal animal, final ItemStack drop)
     {
-        if (animal instanceof IShearable shearable)
+        // 26.1.2: IShearable.spawnShearedDrop now requires a ServerLevel explicitly (was Level). Rancher AI
+        // only calls this server-side, so this is always a ServerLevel in practice; guard defensively anyway.
+        if (animal instanceof IShearable shearable && animal.level() instanceof ServerLevel serverLevel)
         {
-            shearable.spawnShearedDrop(animal.level(), animal.blockPosition(), drop);
+            shearable.spawnShearedDrop(serverLevel, animal.blockPosition(), drop);
             return;
         }
 

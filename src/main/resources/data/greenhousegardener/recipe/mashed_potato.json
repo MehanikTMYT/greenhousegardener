@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:potato"
-    },
-    {
-      "item": "minecolonies:butter"
-    }
+    "minecraft:potato",
+    "minecolonies:butter"
   ],
   "result": {
     "id": "greenhousegardener:mashed_potato"

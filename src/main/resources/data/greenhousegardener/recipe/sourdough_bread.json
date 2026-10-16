@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:sourdough_starter"
-    },
-    {
-      "item": "minecolonies:durum"
-    },
-    {
-      "item": "minecolonies:durum"
-    }
+    "greenhousegardener:sourdough_starter",
+    "minecolonies:durum",
+    "minecolonies:durum"
   ],
   "result": {
     "id": "greenhousegardener:sourdough_bread"

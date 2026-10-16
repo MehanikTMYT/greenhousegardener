@@ -13,7 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -24,7 +24,7 @@ public record SetGreenhouseBiomeFieldMessage(BlockPos buildingPos, BlockPos fiel
 {
     @SuppressWarnings("null")
     public static final Type<SetGreenhouseBiomeFieldMessage> ID =
-        new Type<>(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "set_greenhouse_biome_field"));
+        new Type<>(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "set_greenhouse_biome_field"));
 
     @SuppressWarnings("null")
     public static final StreamCodec<RegistryFriendlyByteBuf, SetGreenhouseBiomeFieldMessage> STREAM_CODEC = StreamCodec.composite(

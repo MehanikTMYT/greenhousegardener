@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "greenhousegardener:hotdog",
+    "#greenhousegardener:condiment"
+  ],
+  "result": {
+    "id": "greenhousegardener:topped_dog"
+  }
+}

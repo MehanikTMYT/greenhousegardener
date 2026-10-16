@@ -9,28 +9,35 @@ import javax.annotation.Nonnull;
 import org.jetbrains.annotations.NotNull;
 
 import com.deathfrog.greenhousegardener.GreenhouseGardenerMod;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 
 /**
  * Loads item remainders for greenhouse climate materials whose item metadata does not expose one.
  */
-public class GreenhouseClimateRemainderListener extends SimpleJsonResourceReloadListener
+public class GreenhouseClimateRemainderListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    // 26.1.2: SimpleJsonResourceReloadListener became Codec<T>-based; see the identical note in
+    // GreenhouseClimateItemValueListener for why this stays JsonElement-typed via a passthrough codec.
+    private static final Codec<JsonElement> JSON_ELEMENT_CODEC = Codec.PASSTHROUGH.xmap(
+        dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue(),
+        json -> new Dynamic<>(JsonOps.INSTANCE, json));
     private static final String DIRECTORY = "greenhouse_climate_remainders";
     private static final String TAG_CONSUMED = "consumed";
     private static final String TAG_REMAINDER = "remainder";
@@ -41,18 +48,18 @@ public class GreenhouseClimateRemainderListener extends SimpleJsonResourceReload
 
     private GreenhouseClimateRemainderListener()
     {
-        super(GSON, DIRECTORY);
+        super(JSON_ELEMENT_CODEC, FileToIdConverter.json(DIRECTORY));
     }
 
     @Override
     protected void apply(
-        @NotNull final @Nonnull Map<ResourceLocation, JsonElement> object,
+        @NotNull final @Nonnull Map<Identifier, JsonElement> object,
         @NotNull final @Nonnull ResourceManager resourceManager,
         @NotNull final @Nonnull ProfilerFiller profiler)
     {
         remainders.clear();
 
-        for (final Map.Entry<ResourceLocation, JsonElement> entry : object.entrySet())
+        for (final Map.Entry<Identifier, JsonElement> entry : object.entrySet())
         {
             try
             {
@@ -93,9 +100,12 @@ public class GreenhouseClimateRemainderListener extends SimpleJsonResourceReload
             return ItemStack.EMPTY;
         }
 
-        if (consumed.hasCraftingRemainingItem())
+        // 26.1.2: ItemStack.hasCraftingRemainingItem()/getCraftingRemainingItem() were removed in favor of
+        // Item.getCraftingRemainder() returning a nullable ItemStackTemplate that must be materialized.
+        final ItemStackTemplate craftingRemainder = consumed.getCraftingRemainder();
+        if (craftingRemainder != null)
         {
-            return consumed.getCraftingRemainingItem();
+            return craftingRemainder.create();
         }
 
         final Item remainder = remainders.get(consumed.getItem());
@@ -108,7 +118,7 @@ public class GreenhouseClimateRemainderListener extends SimpleJsonResourceReload
 
         if (gString == null) return Optional.of(Items.AIR);
 
-        final ResourceLocation location = ResourceLocation.parse(gString);
+        final Identifier location = Identifier.parse(gString);
         return BuiltInRegistries.ITEM.getOptional(location);
     }
 }

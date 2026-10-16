@@ -2,21 +2,11 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:chicken"
-    },
-    {
-      "item": "minecraft:porkchop"
-    },
-    {
-      "item": "minecolonies:tomato"
-    },
-    {
-      "item": "greenhousegardener:mayo"
-    },
-    {
-      "item": "greenhousegardener:sourdough_bread"
-    }
+    "minecraft:chicken",
+    "minecraft:porkchop",
+    "minecolonies:tomato",
+    "greenhousegardener:mayo",
+    "#c:foods/bread"
   ],
   "result": {
     "count": 2,

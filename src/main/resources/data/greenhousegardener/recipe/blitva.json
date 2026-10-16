@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:spinach"
-    },
-    {
-      "item": "minecraft:potato"
-    }
+    "greenhousegardener:spinach",
+    "minecraft:potato"
   ],
   "result": {
     "count": 1,

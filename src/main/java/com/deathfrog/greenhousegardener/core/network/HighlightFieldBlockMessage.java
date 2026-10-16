@@ -8,17 +8,17 @@ import com.deathfrog.greenhousegardener.core.client.GreenhouseFieldHighlighter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Tells the client to highlight a greenhouse field block.
+ * Tells the client to highlight a colony field block.
  */
 public record HighlightFieldBlockMessage(BlockPos fieldPos) implements IClientboundPayload
 {
     @SuppressWarnings("null")
     public static final Type<HighlightFieldBlockMessage> ID =
-        new Type<>(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "highlight_field_block"));
+        new Type<>(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "highlight_field_block"));
 
     @SuppressWarnings("null")
     public static final StreamCodec<RegistryFriendlyByteBuf, HighlightFieldBlockMessage> STREAM_CODEC = StreamCodec.composite(

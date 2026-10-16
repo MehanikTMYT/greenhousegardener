@@ -5,7 +5,7 @@ import com.ldtteam.blockui.views.BOWindow;
 import com.minecolonies.api.colony.buildings.modules.AbstractBuildingModuleView;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +23,7 @@ import static com.deathfrog.greenhousegardener.core.colony.buildings.modules.Ran
 public class RanchHerdListModuleView extends AbstractBuildingModuleView
 {
     private int herdCapacity;
+    private int supportedTypeCapacity;
     private final List<HerdView> herds = new ArrayList<>();
 
     /**
@@ -34,14 +35,16 @@ public class RanchHerdListModuleView extends AbstractBuildingModuleView
     public void deserialize(@NotNull final RegistryFriendlyByteBuf buf)
     {
         herdCapacity = buf.readInt();
+        supportedTypeCapacity = buf.readInt();
         herds.clear();
         final int size = buf.readInt();
         for (int i = 0; i < size; i++)
         {
             herds.add(new HerdView(
-                buf.readResourceLocation(),
+                buf.readIdentifier(),
                 buf.readInt(),
                 buf.readInt(),
+                buf.readBoolean(),
                 ItemStack.OPTIONAL_STREAM_CODEC.decode(buf)));
         }
     }
@@ -74,9 +77,9 @@ public class RanchHerdListModuleView extends AbstractBuildingModuleView
      * @return module-tab icon resource
      */
     @Override
-    public ResourceLocation getIconResourceLocation()
+    public Identifier getIconResourceLocation()
     {
-        return ResourceLocation.fromNamespaceAndPath("minecolonies", "textures/gui/modules/entity.png");
+        return Identifier.fromNamespaceAndPath("minecolonies", "textures/gui/modules/entity.png");
     }
 
     /**
@@ -87,6 +90,11 @@ public class RanchHerdListModuleView extends AbstractBuildingModuleView
     public int getHerdCapacity()
     {
         return herdCapacity;
+    }
+
+    public int getSupportedTypeCapacity()
+    {
+        return supportedTypeCapacity;
     }
 
     /**
@@ -105,9 +113,10 @@ public class RanchHerdListModuleView extends AbstractBuildingModuleView
      * @param entityType registered entity-type identifier
      * @param count number of managed animals currently present
      * @param capabilities synchronized product-capability bitmask
+     * @param supported whether this type occupies a supported first-seen slot
      * @param breedingFood preferred breeding food, or an empty stack
      */
-    public record HerdView(ResourceLocation entityType, int count, int capabilities, ItemStack breedingFood)
+    public record HerdView(Identifier entityType, int count, int capabilities, boolean supported, ItemStack breedingFood)
     {
         /**
          * Tests whether the herd supports bowl-based milking.

@@ -5,7 +5,7 @@ import com.deathfrog.greenhousegardener.core.colony.buildings.jobs.ModJobs;
 import com.minecolonies.api.sounds.EventType;
 import com.minecolonies.api.util.Tuple;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.*;
@@ -40,7 +40,7 @@ public final class ModSoundEvents
      */
     static
     {
-        final List<ResourceLocation> jobList = new ArrayList<>(ModJobs.getJobs());
+        final List<Identifier> jobList = new ArrayList<>(ModJobs.getJobs());
 
         registerSoundsForJobs(GreenhouseGardenerMod.MODID, jobList, SOUND_EVENTS, GG_SOUND_EVENTS);
     }
@@ -48,14 +48,14 @@ public final class ModSoundEvents
     /**
      * Registers the sound events for the given jobs.
      *
-     * @param jobs a list of {@link ResourceLocation}s, which represent the jobs for which the sound events should be registered.
+     * @param jobs a list of {@link Identifier}s, which represent the jobs for which the sound events should be registered.
      */
     public static void registerSoundsForJobs(final @Nonnull String modID,
-        final List<ResourceLocation> jobs,
+        final List<Identifier> jobs,
         DeferredRegister<SoundEvent> soundEventRegister,
         Map<String, Map<EventType, List<Tuple<SoundEvent, SoundEvent>>>> soundMap)
     {
-        for (final ResourceLocation job : jobs)
+        for (final Identifier job : jobs)
         {
             final Map<EventType, List<Tuple<SoundEvent, SoundEvent>>> map = new HashMap<>();
             for (final EventType event : EventType.values())
@@ -71,14 +71,14 @@ public final class ModSoundEvents
                     final SoundEvent femaleSoundEvent = ModSoundEvents.getSoundID(modID,
                         com.minecolonies.api.sounds.ModSoundEvents.CITIZEN_SOUND_EVENT_PREFIX + job.getPath() + ".female" + i + "." + event.getId());
 
-                    String maleSoundPath = maleSoundEvent.getLocation().getPath();
+                    String maleSoundPath = maleSoundEvent.location().getPath();
 
                     if (maleSoundPath != null)
                     {
                         soundEventRegister.register(maleSoundPath, () -> maleSoundEvent);
                     }
 
-                    String femaleSoundPath = femaleSoundEvent.getLocation().getPath();
+                    String femaleSoundPath = femaleSoundEvent.location().getPath();
 
                     if (femaleSoundPath != null)
                     {
@@ -101,7 +101,7 @@ public final class ModSoundEvents
      */
     public static @Nonnull SoundEvent getSoundID(final @Nonnull String modID, final @Nonnull String soundName)
     {
-        final ResourceLocation location = ResourceLocation.fromNamespaceAndPath(modID, soundName);
+        final Identifier location = Identifier.fromNamespaceAndPath(modID, soundName);
 
         if (location == null)
         {

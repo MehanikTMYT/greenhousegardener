@@ -19,7 +19,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -32,7 +33,7 @@ public record SaveGreenhouseBiomeFieldsMessage(BlockPos buildingPos, List<FieldC
 
     @SuppressWarnings("null")
     public static final Type<SaveGreenhouseBiomeFieldsMessage> ID =
-        new Type<>(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "save_greenhouse_biome_fields"));
+        new Type<>(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "save_greenhouse_biome_fields"));
 
     @SuppressWarnings("null")
     public static final StreamCodec<RegistryFriendlyByteBuf, SaveGreenhouseBiomeFieldsMessage> STREAM_CODEC = StreamCodec.composite(
@@ -82,7 +83,18 @@ public record SaveGreenhouseBiomeFieldsMessage(BlockPos buildingPos, List<FieldC
         module.cleanupInvalidOwnedFields();
         if (!module.applyFieldChanges(moduleChanges()))
         {
-            player.displayClientMessage(Component.translatable(BIOME_LIMIT_REACHED), true);
+            // 26.1.2: Player.displayClientMessage(Component, boolean) was removed; the overlay-aware
+            // overload only remains on ServerPlayer.sendSystemMessage(Component, boolean). This handler
+            // always runs server-side against the real player, so the cast is safe; the plain
+            // sendSystemMessage(Component) fallback keeps this defensive against an unexpected caller.
+            if (player instanceof ServerPlayer serverPlayer)
+            {
+                serverPlayer.sendSystemMessage(Component.translatable(BIOME_LIMIT_REACHED), true);
+            }
+            else
+            {
+                player.sendSystemMessage(Component.translatable(BIOME_LIMIT_REACHED));
+            }
         }
     }
 

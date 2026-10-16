@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:cooked_rice"
-    },
-    {
-      "item": "minecolonies:tofu"
-    },
-    {
-      "item": "minecraft:brown_mushroom"
-    }
+    "minecolonies:cooked_rice",
+    "minecolonies:tofu",
+    "minecraft:brown_mushroom"
   ],
   "result": {
     "id": "greenhousegardener:mixed_rice"

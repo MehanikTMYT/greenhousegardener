@@ -1,4 +1,5 @@
 package com.deathfrog.greenhousegardener;
+import net.minecraft.resources.Identifier;
 
 import org.slf4j.Logger;
 import com.deathfrog.greenhousegardener.api.sounds.ModSoundEvents;
@@ -11,6 +12,7 @@ import com.deathfrog.greenhousegardener.core.advancements.AdvancementTriggers;
 import com.deathfrog.greenhousegardener.core.blocks.ModBlocks;
 import com.deathfrog.greenhousegardener.core.datalistener.GreenhouseClimateItemValueListener;
 import com.deathfrog.greenhousegardener.core.datalistener.GreenhouseClimateRemainderListener;
+import com.deathfrog.greenhousegardener.core.datalistener.GreenhouseCropProductListener;
 import com.deathfrog.greenhousegardener.core.items.ModCreativeTabs;
 import com.deathfrog.greenhousegardener.core.items.ModItems;
 import com.deathfrog.greenhousegardener.core.entity.EntityAIWorkRancher;
@@ -18,6 +20,7 @@ import com.deathfrog.greenhousegardener.core.event.RancherDamageHandler;
 import com.deathfrog.greenhousegardener.core.network.NetworkHandler;
 import com.deathfrog.greenhousegardener.core.network.SyncGreenhouseClimateItemsMessage;
 import com.deathfrog.greenhousegardener.core.world.GreenhouseAmbientPoofService;
+import com.deathfrog.greenhousegardener.core.world.biomeservice.GreenhouseReferenceBiomeValidator;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,8 +28,13 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -42,6 +50,8 @@ public class GreenhouseGardenerMod
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    private static final PackSource OPTIONAL_PACK_SOURCE = PackSource.create(component -> component, false);
+
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public GreenhouseGardenerMod(IEventBus modEventBus, ModContainer modContainer)
@@ -51,6 +61,7 @@ public class GreenhouseGardenerMod
         modEventBus.addListener(ModBuildingsInitializer::registerBuildings);
         modEventBus.addListener(CapabilityInitializer::registerCapabilities);
         modEventBus.addListener(NetworkHandler::register);
+        modEventBus.addListener(this::addPackFinders);
 
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
@@ -79,6 +90,18 @@ public class GreenhouseGardenerMod
     {
     }
 
+    @SuppressWarnings("null")
+    private void addPackFinders(final AddPackFindersEvent event)
+    {
+        event.addPackFinders(
+            Identifier.fromNamespaceAndPath(MODID, "datapacks/more_illnesses"),
+            PackType.SERVER_DATA,
+            Component.translatable("pack.greenhousegardener.more_illnesses"),
+            OPTIONAL_PACK_SOURCE,
+            false,
+            Pack.Position.TOP);
+    }
+
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
@@ -88,10 +111,11 @@ public class GreenhouseGardenerMod
 
     @SuppressWarnings("null")
     @SubscribeEvent
-    public void onAddReloadListener(final AddReloadListenerEvent event)
+    public void onAddReloadListener(final AddServerReloadListenersEvent event)
     {
-        event.addListener(GreenhouseClimateItemValueListener.INSTANCE);
-        event.addListener(GreenhouseClimateRemainderListener.INSTANCE);
+        event.addListener(Identifier.fromNamespaceAndPath(MODID, "greenhouse_climate_items"), GreenhouseClimateItemValueListener.INSTANCE);
+        event.addListener(Identifier.fromNamespaceAndPath(MODID, "greenhouse_climate_remainders"), GreenhouseClimateRemainderListener.INSTANCE);
+        event.addListener(Identifier.fromNamespaceAndPath(MODID, "greenhouse_crop_products"), GreenhouseCropProductListener.INSTANCE);
     }
 
     @SubscribeEvent
@@ -106,6 +130,10 @@ public class GreenhouseGardenerMod
     public void onTagsUpdated(final TagsUpdatedEvent event)
     {
         EntityAIWorkRancher.invalidateFoodCaches();
+        if (event.shouldUpdateStaticData())
+        {
+            GreenhouseReferenceBiomeValidator.validate(event.getRegistries());
+        }
     }
 
     @SubscribeEvent

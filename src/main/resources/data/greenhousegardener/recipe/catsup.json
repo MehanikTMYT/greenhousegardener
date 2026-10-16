@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecolonies:tomato",
+    "minecraft:sugar"
+  ],
+  "result": {
+    "id": "greenhousegardener:catsup"
+  }
+}

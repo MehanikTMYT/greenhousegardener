@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:spinach"
-    },
-    {
-      "item": "minecolonies:large_milk_bottle"
-    }
+    "greenhousegardener:spinach",
+    "minecolonies:large_milk_bottle"
   ],
   "result": {
     "count": 1,

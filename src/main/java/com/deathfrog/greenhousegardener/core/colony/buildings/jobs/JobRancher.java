@@ -5,7 +5,7 @@ import com.minecolonies.api.client.render.modeltype.ModModelTypes;
 import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.util.StatsUtil;
 import com.minecolonies.core.colony.jobs.AbstractJob;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +13,7 @@ import static com.minecolonies.api.util.constant.StatisticsConstants.ITEM_OBTAIN
 
 public class JobRancher extends AbstractJob<EntityAIWorkRancher, JobRancher>
 {
+    private boolean herdTypeOverload;
     public JobRancher(final ICitizenData entity)
     {
         super(entity);
@@ -24,6 +25,16 @@ public class JobRancher extends AbstractJob<EntityAIWorkRancher, JobRancher>
         return new EntityAIWorkRancher(this);
     }
 
+    public boolean hasHerdTypeOverload()
+    {
+        return herdTypeOverload;
+    }
+
+    public void setHerdTypeOverload(final boolean herdTypeOverload)
+    {
+        this.herdTypeOverload = herdTypeOverload;
+    }
+
     /**
      * Reuses MineColonies' Cowboy citizen model and skin variants until the
      * Rancher receives dedicated artwork.
@@ -32,7 +43,7 @@ public class JobRancher extends AbstractJob<EntityAIWorkRancher, JobRancher>
      */
     @NotNull
     @Override
-    public ResourceLocation getModel()
+    public Identifier getModel()
     {
         return ModModelTypes.COW_FARMER_ID;
     }

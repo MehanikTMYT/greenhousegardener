@@ -7,13 +7,17 @@ import com.deathfrog.greenhousegardener.core.colony.buildings.modules.Greenhouse
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.util.RegistryConstructionContext;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -34,10 +38,20 @@ public class BlockClimateControlHub extends Block implements SimpleWaterloggedBl
     @SuppressWarnings("null")
     public static final @Nonnull EnumProperty<VisualClimate> CLIMATE = EnumProperty.create("climate", VisualClimate.class);
 
+    /**
+     * 26.1.2: {@code BlockBehaviour.Properties.setId(...)} is now mandatory for every block -- construction
+     * throws "Block id not set" (NPE from {@code BlockBehaviour.Properties.effectiveDrops}) otherwise. This
+     * used to look like a MineColonies-only requirement because {@code AbstractBlockMinecolonies}/
+     * {@code AbstractBlockHut} apply it automatically via {@code RegistryConstructionContext.applyBlockKey(...)}
+     * in their own constructors (see {@code AbstractBlockMinecolonies.<init>}: {@code super(applyBlockKey(properties))}).
+     * This class extends plain vanilla {@link Block} directly, so it must call {@code applyBlockKey} itself; the
+     * registration in {@link ModBlocks} wraps this constructor with {@code RegistryConstructionContext.constructBlock(id, ...)}
+     * to populate the thread-local key that {@code applyBlockKey} reads (reproduced and fixed via a real runServer smoke test).
+     */
     @SuppressWarnings("null")
     public BlockClimateControlHub()
     {
-        super(BlockBehaviour.Properties.ofFullCopy(Blocks.SMOOTH_STONE).lightLevel(state -> 6));
+        super(RegistryConstructionContext.applyBlockKey(BlockBehaviour.Properties.ofFullCopy(Blocks.SMOOTH_STONE).lightLevel(state -> 6)));
         this.registerDefaultState(this.stateDefinition.any()
             .setValue(WATERLOGGED, Boolean.FALSE)
             .setValue(CLIMATE, VisualClimate.INACTIVE));
@@ -54,21 +68,29 @@ public class BlockClimateControlHub extends Block implements SimpleWaterloggedBl
             .setValue(CLIMATE, VisualClimate.INACTIVE);
     }
 
+    /**
+     * 26.1.2: updateShape's signature was restructured -- it now takes a separate ScheduledTickAccess for
+     * scheduling ticks (LevelReader itself is no longer tick-schedulable) plus a trailing RandomSource, and
+     * the neighbour-direction/position/state parameters were reordered. Matches the real vanilla
+     * LadderBlock.updateShape idiom for the waterlogged-tick-scheduling pattern.
+     */
     @Override
     protected BlockState updateShape(
         final @Nonnull BlockState state,
-        final @Nonnull Direction facing,
-        final @Nonnull BlockState facingState,
-        final @Nonnull LevelAccessor level,
+        final @Nonnull LevelReader level,
+        final @Nonnull ScheduledTickAccess ticks,
         final @Nonnull BlockPos currentPos,
-        final @Nonnull BlockPos facingPos)
+        final @Nonnull Direction facing,
+        final @Nonnull BlockPos facingPos,
+        final @Nonnull BlockState facingState,
+        final @Nonnull RandomSource random)
     {
         if (state.getValue(WATERLOGGED))
         {
-            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+            ticks.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+        return super.updateShape(state, level, ticks, currentPos, facing, facingPos, facingState, random);
     }
 
     @Override
@@ -113,25 +135,22 @@ public class BlockClimateControlHub extends Block implements SimpleWaterloggedBl
     /**
      * Invalidate greenhouse field ownership when this hub block is removed.
      *
+     * <p>26.1.2: {@code Block.onRemove(state, level, pos, newState, movedByPiston)} was replaced by
+     * {@code affectNeighborsAfterRemoval(state, level, pos, movedByPiston)}. The engine now only invokes this
+     * hook when the block type actually changed (see LevelChunk.setBlockState's {@code blockChanged} check),
+     * so the old {@code state.is(newState.getBlock())} guard that used to distinguish "genuine removal" from
+     * "same-block state property change" is redundant here and has been dropped -- by the time this method
+     * runs, the removal is already confirmed genuine.</p>
+     *
      * @param state previous block state
-     * @param level world containing the removed hub
+     * @param level server world containing the removed hub
      * @param pos removed hub position
-     * @param newState replacement block state
      * @param movedByPiston true when the block was moved by a piston
      */
     @Override
-    protected void onRemove(final @Nonnull BlockState state, final @Nonnull Level level, final @Nonnull BlockPos pos, final @Nonnull BlockState newState, final boolean movedByPiston)
+    protected void affectNeighborsAfterRemoval(final @Nonnull BlockState state, final @Nonnull ServerLevel level, final @Nonnull BlockPos pos, final boolean movedByPiston)
     {
-        Block block = newState.getBlock();
-
-        if (block == null) return;
-
-        super.onRemove(state, level, pos, newState, movedByPiston);
-        if (level == null || level.isClientSide() || state.is(block))
-        {
-            return;
-        }
-
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
         cleanupGreenhouseOwnership(level, pos.above());
     }
 

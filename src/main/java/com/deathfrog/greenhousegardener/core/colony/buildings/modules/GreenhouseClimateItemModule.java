@@ -289,10 +289,10 @@ public abstract class GreenhouseClimateItemModule extends AbstractBuildingModule
     public void deserializeNBT(@NotNull final HolderLookup.Provider provider, final CompoundTag compound)
     {
         items.values().forEach(Set::clear);
-        readItems(provider, compound.getList(TAG_INCREASE, Tag.TAG_COMPOUND), items.get(ClimateItemList.INCREASE));
-        readItems(provider, compound.getList(TAG_DECREASE, Tag.TAG_COMPOUND), items.get(ClimateItemList.DECREASE));
-        ledgerBalances.put(ClimateItemList.INCREASE, compound.getInt(TAG_LEDGER_INCREASE));
-        ledgerBalances.put(ClimateItemList.DECREASE, compound.getInt(TAG_LEDGER_DECREASE));
+        readItems(provider, compound.getListOrEmpty(TAG_INCREASE), items.get(ClimateItemList.INCREASE));
+        readItems(provider, compound.getListOrEmpty(TAG_DECREASE), items.get(ClimateItemList.DECREASE));
+        ledgerBalances.put(ClimateItemList.INCREASE, compound.getIntOr(TAG_LEDGER_INCREASE, 0));
+        ledgerBalances.put(ClimateItemList.DECREASE, compound.getIntOr(TAG_LEDGER_DECREASE, 0));
     }
 
     /**
@@ -350,7 +350,7 @@ public abstract class GreenhouseClimateItemModule extends AbstractBuildingModule
         for (final Tag tag : tags)
         {
             final CompoundTag itemTag = (CompoundTag) tag;
-            final CompoundTag stackTag = itemTag.getCompound(NbtTagConstants.STACK);
+            final CompoundTag stackTag = itemTag.getCompoundOrEmpty(NbtTagConstants.STACK);
             if (stackTag.isEmpty())
             {
                 continue;
@@ -362,7 +362,7 @@ public abstract class GreenhouseClimateItemModule extends AbstractBuildingModule
                 continue;
             }
 
-            target.add(new ItemStorage(stack, Math.max(0, itemTag.getInt(TAG_PROTECTED_QUANTITY))));
+            target.add(new ItemStorage(stack, Math.max(0, itemTag.getIntOr(TAG_PROTECTED_QUANTITY, 0))));
         }
     }
 
@@ -380,7 +380,9 @@ public abstract class GreenhouseClimateItemModule extends AbstractBuildingModule
         sorted(source).forEach(item -> {
             final CompoundTag itemTag = new CompoundTag();
             final ItemStorage normalizedItem = normalizedClimateItem(item);
-            itemTag.put(NbtTagConstants.STACK, normalizedItem.getItemStack().saveOptional(provider));
+            // 26.1.2 removed ItemStack.saveOptional(Provider); Utils.saveOptionalItemStack() is MineColonies'
+            // own documented replacement (built on the surviving ItemStack.OPTIONAL_CODEC).
+            itemTag.put(NbtTagConstants.STACK, Utils.saveOptionalItemStack(provider, normalizedItem.getItemStack()));
             itemTag.putInt(TAG_PROTECTED_QUANTITY, normalizedItem.getAmount());
             tags.add(itemTag);
         });
@@ -415,16 +417,18 @@ public abstract class GreenhouseClimateItemModule extends AbstractBuildingModule
     private static ItemStack parseSelectedStack(final @Nonnull HolderLookup.Provider provider, final CompoundTag stackTag)
     {
         final CompoundTag normalizedTag = stackTag.copy();
-        if (normalizedTag.contains("count") && normalizedTag.getInt("count") <= 0)
+        if (normalizedTag.contains("count") && normalizedTag.getIntOr("count", 0) <= 0)
         {
             normalizedTag.putInt("count", 1);
         }
-        if (normalizedTag.contains("Count") && normalizedTag.getInt("Count") <= 0)
+        if (normalizedTag.contains("Count") && normalizedTag.getIntOr("Count", 0) <= 0)
         {
             normalizedTag.putInt("Count", 1);
         }
 
-        final ItemStack stack = ItemStack.parseOptional(provider, normalizedTag);
+        // 26.1.2 removed ItemStack.parseOptional(Provider, CompoundTag); Utils.parseOptionalItemStack() is
+        // MineColonies' own documented replacement.
+        final ItemStack stack = Utils.parseOptionalItemStack(provider, normalizedTag);
         stack.setCount(stack.isEmpty() ? 0 : 1);
         return stack;
     }

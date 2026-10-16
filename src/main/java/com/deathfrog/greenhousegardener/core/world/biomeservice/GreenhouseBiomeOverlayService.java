@@ -3,6 +3,7 @@ package com.deathfrog.greenhousegardener.core.world.biomeservice;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import com.deathfrog.greenhousegardener.GreenhouseGardenerMod;
 import com.deathfrog.greenhousegardener.core.colony.buildings.modules.GreenhouseBiomeModule.HumiditySetting;
 import com.deathfrog.greenhousegardener.core.colony.buildings.modules.GreenhouseBiomeModule.TemperatureSetting;
 
@@ -20,7 +22,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -32,20 +34,42 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
  */
 public final class GreenhouseBiomeOverlayService
 {
-    public static final int DEFAULT_VERTICAL_RANGE = 8;
+    public static final int DEFAULT_BELOW_FIELD = 2;
+    public static final int DEFAULT_ABOVE_FIELD = 8;
     private static final int BIOME_LOOKUP_PADDING = 4;
-    private static final ResourceLocation BIOME_COLD_DRY = ResourceLocation.withDefaultNamespace("snowy_slopes");
-    private static final ResourceLocation BIOME_COLD_NORMAL = ResourceLocation.withDefaultNamespace("snowy_plains");
-    private static final ResourceLocation BIOME_COLD_HUMID = ResourceLocation.withDefaultNamespace("old_growth_pine_taiga");
-    private static final ResourceLocation BIOME_TEMPERATE_DRY = ResourceLocation.withDefaultNamespace("savanna");
-    private static final ResourceLocation BIOME_TEMPERATE_NORMAL = ResourceLocation.withDefaultNamespace("plains");
-    private static final ResourceLocation BIOME_TEMPERATE_HUMID = ResourceLocation.withDefaultNamespace("swamp");
-    private static final ResourceLocation BIOME_HOT_DRY = ResourceLocation.withDefaultNamespace("desert");
-    private static final ResourceLocation BIOME_HOT_NORMAL = ResourceLocation.withDefaultNamespace("sparse_jungle");
-    private static final ResourceLocation BIOME_HOT_HUMID = ResourceLocation.withDefaultNamespace("jungle");
+    private static final Identifier BIOME_COLD_DRY = referenceBiome("cold_dry");
+    private static final Identifier BIOME_COLD_NORMAL = referenceBiome("cold_normal");
+    private static final Identifier BIOME_COLD_HUMID = referenceBiome("cold_humid");
+    private static final Identifier BIOME_TEMPERATE_DRY = referenceBiome("temperate_dry");
+    private static final Identifier BIOME_TEMPERATE_NORMAL = referenceBiome("temperate_normal");
+    private static final Identifier BIOME_TEMPERATE_HUMID = referenceBiome("temperate_humid");
+    private static final Identifier BIOME_HOT_DRY = referenceBiome("hot_dry");
+    private static final Identifier BIOME_HOT_NORMAL = referenceBiome("hot_normal");
+    private static final Identifier BIOME_HOT_HUMID = referenceBiome("hot_humid");
+    private static final Map<Identifier, GreenhouseClimate> LEGACY_REFERENCE_CLIMATES = legacyReferenceClimates();
 
     private GreenhouseBiomeOverlayService()
     {
+    }
+
+    private static Identifier referenceBiome(final @Nonnull String path)
+    {
+        return Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path);
+    }
+
+    private static Map<Identifier, GreenhouseClimate> legacyReferenceClimates()
+    {
+        final Map<Identifier, GreenhouseClimate> climates = new HashMap<>();
+        climates.put(Identifier.withDefaultNamespace("snowy_slopes"), new GreenhouseClimate(TemperatureSetting.COLD, HumiditySetting.DRY));
+        climates.put(Identifier.withDefaultNamespace("snowy_plains"), new GreenhouseClimate(TemperatureSetting.COLD, HumiditySetting.NORMAL));
+        climates.put(Identifier.withDefaultNamespace("old_growth_pine_taiga"), new GreenhouseClimate(TemperatureSetting.COLD, HumiditySetting.HUMID));
+        climates.put(Identifier.withDefaultNamespace("savanna"), new GreenhouseClimate(TemperatureSetting.TEMPERATE, HumiditySetting.DRY));
+        climates.put(Identifier.withDefaultNamespace("plains"), new GreenhouseClimate(TemperatureSetting.TEMPERATE, HumiditySetting.NORMAL));
+        climates.put(Identifier.withDefaultNamespace("swamp"), new GreenhouseClimate(TemperatureSetting.TEMPERATE, HumiditySetting.HUMID));
+        climates.put(Identifier.withDefaultNamespace("desert"), new GreenhouseClimate(TemperatureSetting.HOT, HumiditySetting.DRY));
+        climates.put(Identifier.withDefaultNamespace("sparse_jungle"), new GreenhouseClimate(TemperatureSetting.HOT, HumiditySetting.NORMAL));
+        climates.put(Identifier.withDefaultNamespace("jungle"), new GreenhouseClimate(TemperatureSetting.HOT, HumiditySetting.HUMID));
+        return Map.copyOf(climates);
     }
 
     /**
@@ -64,10 +88,11 @@ public final class GreenhouseBiomeOverlayService
         final BlockPos center,
         final int horizontalRange,
         final GreenhouseClimate climate,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
-        return applyOverlay(level, center, horizontalRange, DEFAULT_VERTICAL_RANGE, climate, naturalBiomes, appliedBiomes);
+        return applyOverlay(level, FieldBiomeFootprint.centered(
+            center, horizontalRange, DEFAULT_BELOW_FIELD, DEFAULT_ABOVE_FIELD), climate, naturalBiomes, appliedBiomes);
     }
 
     /**
@@ -88,8 +113,8 @@ public final class GreenhouseBiomeOverlayService
         final int horizontalRange,
         final int verticalRange,
         final GreenhouseClimate climate,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         if (center == null)
         {
@@ -114,15 +139,15 @@ public final class GreenhouseBiomeOverlayService
         final ServerLevel level,
         final FieldBiomeFootprint footprint,
         final GreenhouseClimate climate,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         if (level == null || footprint == null || climate == null || naturalBiomes == null || appliedBiomes == null)
         {
             return OverlayResult.EMPTY;
         }
 
-        final ResourceLocation targetBiomeId = biomeFor(climate);
+        final Identifier targetBiomeId = biomeFor(climate);
         if (targetBiomeId == null)
         {
             return OverlayResult.EMPTY;
@@ -150,7 +175,7 @@ public final class GreenhouseBiomeOverlayService
                     return currentBiome;
                 }
 
-                final Optional<ResourceLocation> currentBiomeId = holderId(currentBiome);
+                final Optional<Identifier> currentBiomeId = holderId(currentBiome);
                 if (!shouldWriteOverlayCell(currentBiomeId.orElse(null), targetBiomeId))
                 {
                     return currentBiome;
@@ -161,7 +186,7 @@ public final class GreenhouseBiomeOverlayService
                 changedCells.add(cellPos);
                 return targetBiome;
             }, level.getChunkSource().randomState().sampler());
-            chunk.setUnsaved(true);
+            chunk.markUnsaved();
         }
 
         resendBiomes(level, chunkSelection.chunks());
@@ -182,10 +207,11 @@ public final class GreenhouseBiomeOverlayService
         final ServerLevel level,
         final BlockPos center,
         final int horizontalRange,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
-        return restoreOverlay(level, center, horizontalRange, DEFAULT_VERTICAL_RANGE, naturalBiomes, appliedBiomes);
+        return restoreOverlay(level, FieldBiomeFootprint.centered(
+            center, horizontalRange, DEFAULT_BELOW_FIELD, DEFAULT_ABOVE_FIELD), naturalBiomes, appliedBiomes);
     }
 
     /**
@@ -204,8 +230,8 @@ public final class GreenhouseBiomeOverlayService
         final BlockPos center,
         final int horizontalRange,
         final int verticalRange,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         if (center == null)
         {
@@ -227,8 +253,8 @@ public final class GreenhouseBiomeOverlayService
     public static OverlayResult restoreOverlay(
         final ServerLevel level,
         final FieldBiomeFootprint footprint,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         if (level == null || footprint == null || naturalBiomes == null || appliedBiomes == null)
         {
@@ -252,8 +278,8 @@ public final class GreenhouseBiomeOverlayService
         final ServerLevel level,
         final FieldBiomeFootprint footprint,
         final Collection<FieldBiomeFootprint> protectedFootprints,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         if (level == null || footprint == null || naturalBiomes == null || appliedBiomes == null)
         {
@@ -280,8 +306,8 @@ public final class GreenhouseBiomeOverlayService
      */
     public static OverlayResult restoreAllOverlays(
         final ServerLevel level,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         if (level == null || naturalBiomes == null || appliedBiomes == null || appliedBiomes.isEmpty())
         {
@@ -312,12 +338,12 @@ public final class GreenhouseBiomeOverlayService
     }
 
     /**
-     * Resolve the vanilla biome used to represent a requested greenhouse climate.
+     * Resolve the private reference biome used to represent a requested greenhouse climate.
      *
      * @param climate the desired greenhouse climate
      * @return the resource location of the overlay biome
      */
-    public static ResourceLocation biomeFor(final GreenhouseClimate climate)
+    public static Identifier biomeFor(final GreenhouseClimate climate)
     {
         return switch (climate.temperature())
         {
@@ -348,7 +374,7 @@ public final class GreenhouseBiomeOverlayService
      * @param biomeId biome id to classify
      * @return the greenhouse climate, or empty when the biome is not a reference biome
      */
-    public static Optional<GreenhouseClimate> climateFor(final ResourceLocation biomeId)
+    public static Optional<GreenhouseClimate> climateFor(final Identifier biomeId)
     {
         if (biomeId == null)
         {
@@ -370,6 +396,103 @@ public final class GreenhouseBiomeOverlayService
     }
 
     /**
+     * Resolve an old vanilla overlay reference without classifying naturally occurring vanilla biomes as overlays.
+     */
+    public static Optional<GreenhouseClimate> legacyClimateFor(final Identifier biomeId)
+    {
+        return Optional.ofNullable(LEGACY_REFERENCE_CLIMATES.get(biomeId));
+    }
+
+    /**
+     * Check whether a biome is either the current or legacy representation of a climate.
+     */
+    public static boolean representsClimate(final Identifier biomeId, final GreenhouseClimate climate)
+    {
+        return biomeId != null && climate != null
+            && (biomeId.equals(biomeFor(climate)) || climate.equals(LEGACY_REFERENCE_CLIMATES.get(biomeId)));
+    }
+
+    /**
+     * Check whether both the live cell and its persisted applied-biome entry are the same legacy climate.
+     * Untracked cells are not legacy overlays, even when their naturally generated biome happens to be an old
+     * reference biome.
+     */
+    static boolean isTrackedLegacy(
+        final Identifier currentBiomeId,
+        final Identifier trackedBiomeId,
+        final GreenhouseClimate climate)
+    {
+        return currentBiomeId != null && trackedBiomeId != null && climate != null
+            && climate.equals(LEGACY_REFERENCE_CLIMATES.get(currentBiomeId))
+            && climate.equals(LEGACY_REFERENCE_CLIMATES.get(trackedBiomeId));
+    }
+
+    /**
+     * Replace legacy reference biome cells during an ordinary maintenance visit without recapturing
+     * those artificial cells as natural biomes.
+     */
+    @SuppressWarnings("null")
+    public static OverlayResult migrateLegacyOverlay(
+        final ServerLevel level,
+        final FieldBiomeFootprint footprint,
+        final GreenhouseClimate climate,
+        final Map<BlockPos, Identifier> appliedBiomes)
+    {
+        if (level == null || footprint == null || climate == null || appliedBiomes == null)
+        {
+            return OverlayResult.EMPTY;
+        }
+
+        final Identifier targetBiomeId = biomeFor(climate);
+        final Holder.Reference<Biome> targetBiome = biomeHolder(level, targetBiomeId);
+        final BoundingBox targetRegion = footprint.paddedBiomeRegion();
+        final ChunkSelection chunkSelection = selectedChunks(level, targetRegion, true);
+        final Set<BlockPos> changedCells = new HashSet<>();
+
+        for (final ChunkAccess chunk : chunkSelection.chunks())
+        {
+            chunk.fillBiomesFromNoise((quartX, quartY, quartZ, sampler) -> {
+                final BlockPos cellPos = quantizedCell(quartX, quartY, quartZ);
+                if (cellPos == null || !targetRegion.isInside(cellPos))
+                {
+                    return chunk.getNoiseBiome(quartX, quartY, quartZ);
+                }
+
+                final Holder<Biome> currentBiome = chunk.getNoiseBiome(quartX, quartY, quartZ);
+                final Identifier currentBiomeId = holderId(currentBiome).orElse(null);
+                final Identifier trackedBiomeId = appliedBiomes.get(cellPos);
+                if (!representsClimate(trackedBiomeId, climate))
+                {
+                    return currentBiome;
+                }
+
+                if (targetBiomeId.equals(currentBiomeId))
+                {
+                    appliedBiomes.put(cellPos, targetBiomeId);
+                    return currentBiome;
+                }
+                if (climate.equals(LEGACY_REFERENCE_CLIMATES.get(currentBiomeId)))
+                {
+                    appliedBiomes.put(cellPos, targetBiomeId);
+                    changedCells.add(cellPos);
+                    return targetBiome;
+                }
+                return currentBiome;
+            }, level.getChunkSource().randomState().sampler());
+            if (!changedCells.isEmpty())
+            {
+                chunk.markUnsaved();
+            }
+        }
+
+        if (!changedCells.isEmpty())
+        {
+            resendBiomes(level, chunkSelection.chunks());
+        }
+        return new OverlayResult(changedCells.size(), chunkSelection.chunks().size(), chunkSelection.hadUnloadedChunks());
+    }
+
+    /**
      * Check whether a field region already has the requested greenhouse biome.
      *
      * @param level the server level containing the field
@@ -384,7 +507,8 @@ public final class GreenhouseBiomeOverlayService
         final int horizontalRange,
         final GreenhouseClimate climate)
     {
-        return needsOverlay(level, center, horizontalRange, DEFAULT_VERTICAL_RANGE, climate);
+        return needsOverlay(level, FieldBiomeFootprint.centered(
+            center, horizontalRange, DEFAULT_BELOW_FIELD, DEFAULT_ABOVE_FIELD), climate);
     }
 
     /**
@@ -441,12 +565,25 @@ public final class GreenhouseBiomeOverlayService
         final FieldBiomeFootprint footprint,
         final GreenhouseClimate climate)
     {
+        return checkOverlay(level, footprint, climate, null);
+    }
+
+    /**
+     * Inspect an overlay while accepting legacy reference cells only when module persistence proves that
+     * Greenhouse Gardener previously applied them.
+     */
+    public static OverlayCheckResult checkOverlay(
+        final ServerLevel level,
+        final FieldBiomeFootprint footprint,
+        final GreenhouseClimate climate,
+        final Map<BlockPos, Identifier> appliedBiomes)
+    {
         if (level == null || footprint == null || climate == null)
         {
             return OverlayCheckResult.COMPLETE;
         }
 
-        final ResourceLocation targetBiomeId = biomeFor(climate);
+        final Identifier targetBiomeId = biomeFor(climate);
         if (targetBiomeId == null)
         {
             return OverlayCheckResult.COMPLETE;
@@ -482,8 +619,11 @@ public final class GreenhouseBiomeOverlayService
                         }
 
                         loadedCells++;
-                        final Optional<ResourceLocation> currentBiomeId = holderId(chunk.getNoiseBiome(quartX, quartY, quartZ));
-                        if (currentBiomeId.isEmpty() || !targetBiomeId.equals(currentBiomeId.get()))
+                        final Optional<Identifier> currentBiomeId = holderId(chunk.getNoiseBiome(quartX, quartY, quartZ));
+                        final boolean current = currentBiomeId.isPresent() && targetBiomeId.equals(currentBiomeId.get());
+                        final boolean trackedLegacy = currentBiomeId.isPresent() && appliedBiomes != null
+                            && isTrackedLegacy(currentBiomeId.get(), appliedBiomes.get(cellPos), climate);
+                        if (!current && !trackedLegacy)
                         {
                             mismatchedCells++;
                         }
@@ -502,8 +642,8 @@ public final class GreenhouseBiomeOverlayService
     private static OverlayResult restoreOverlay(
         final ServerLevel level,
         final BoundingBox targetRegion,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         return restoreOverlay(level, targetRegion, List.of(), naturalBiomes, appliedBiomes);
     }
@@ -513,8 +653,8 @@ public final class GreenhouseBiomeOverlayService
         final ServerLevel level,
         final BoundingBox targetRegion,
         final Collection<BoundingBox> protectedRegions,
-        final Map<BlockPos, ResourceLocation> naturalBiomes,
-        final Map<BlockPos, ResourceLocation> appliedBiomes)
+        final Map<BlockPos, Identifier> naturalBiomes,
+        final Map<BlockPos, Identifier> appliedBiomes)
     {
         final ChunkSelection chunkSelection = selectedChunks(level, targetRegion, true);
         if (chunkSelection.chunks().isEmpty())
@@ -541,14 +681,14 @@ public final class GreenhouseBiomeOverlayService
                     return currentBiome;
                 }
 
-                final ResourceLocation expectedApplied = appliedBiomes.get(cellPos);
-                final ResourceLocation naturalBiomeId = naturalBiomes.get(cellPos);
+                final Identifier expectedApplied = appliedBiomes.get(cellPos);
+                final Identifier naturalBiomeId = naturalBiomes.get(cellPos);
                 if (expectedApplied == null || naturalBiomeId == null)
                 {
                     return currentBiome;
                 }
 
-                final Optional<ResourceLocation> currentBiomeId = holderId(currentBiome);
+                final Optional<Identifier> currentBiomeId = holderId(currentBiome);
                 if (currentBiomeId.isEmpty() || !expectedApplied.equals(currentBiomeId.get()))
                 {
                     return currentBiome;
@@ -557,7 +697,7 @@ public final class GreenhouseBiomeOverlayService
                 restoredCells.add(cellPos);
                 return biomeHolder(level, naturalBiomeId);
             }, level.getChunkSource().randomState().sampler());
-            chunk.setUnsaved(true);
+            chunk.markUnsaved();
         }
 
         restoredCells.forEach(pos -> {
@@ -651,23 +791,23 @@ public final class GreenhouseBiomeOverlayService
      * @param targetBiomeId desired overlay biome id
      * @return true when the overlay writer should replace the cell
      */
-    static boolean shouldWriteOverlayCell(final ResourceLocation currentBiomeId, final ResourceLocation targetBiomeId)
+    static boolean shouldWriteOverlayCell(final Identifier currentBiomeId, final Identifier targetBiomeId)
     {
         return targetBiomeId != null && !targetBiomeId.equals(currentBiomeId);
     }
 
     @SuppressWarnings("null")
-    private static Holder.Reference<Biome> biomeHolder(final ServerLevel level, final ResourceLocation biomeId)
+    private static Holder.Reference<Biome> biomeHolder(final ServerLevel level, final Identifier biomeId)
     {
         return level.registryAccess()
-            .registryOrThrow(Registries.BIOME)
-            .getHolderOrThrow(ResourceKey.create(Registries.BIOME, biomeId));
+            .lookupOrThrow(Registries.BIOME)
+            .getOrThrow(ResourceKey.create(Registries.BIOME, biomeId));
     }
 
     @SuppressWarnings("null")
-    private static Optional<ResourceLocation> holderId(final Holder<Biome> biome)
+    private static Optional<Identifier> holderId(final Holder<Biome> biome)
     {
-        return biome.unwrapKey().map(ResourceKey::location);
+        return biome.unwrapKey().map(ResourceKey::identifier);
     }
 
     private static void resendBiomes(final ServerLevel level, final @Nonnull List<ChunkAccess> chunks)

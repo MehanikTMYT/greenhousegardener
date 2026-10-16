@@ -2,18 +2,10 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:spinach"
-    },
-    {
-      "item": "greenhousegardener:pastry"
-    },
-    {
-      "item": "minecolonies:feta_cheese"
-    },
-    {
-      "item": "minecolonies:onion"
-    }
+    "greenhousegardener:spinach",
+    "greenhousegardener:pastry",
+    "minecolonies:feta_cheese",
+    "minecolonies:onion"
   ],
   "result": {
     "count": 2,

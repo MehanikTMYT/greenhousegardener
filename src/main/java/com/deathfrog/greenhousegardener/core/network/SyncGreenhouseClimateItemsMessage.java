@@ -9,7 +9,7 @@ import com.deathfrog.greenhousegardener.core.datalistener.GreenhouseClimateItemV
 import com.deathfrog.greenhousegardener.core.datalistener.GreenhouseClimateItemValueListener.SyncedClimateItemValue;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
@@ -23,7 +23,7 @@ public record SyncGreenhouseClimateItemsMessage(List<SyncedClimateItemValue> val
 
     @SuppressWarnings("null")
     public static final Type<SyncGreenhouseClimateItemsMessage> ID =
-        new Type<>(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "sync_greenhouse_climate_items"));
+        new Type<>(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "sync_greenhouse_climate_items"));
 
     @SuppressWarnings("null")
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncGreenhouseClimateItemsMessage> STREAM_CODEC = new StreamCodec<>()
@@ -38,7 +38,7 @@ public record SyncGreenhouseClimateItemsMessage(List<SyncedClimateItemValue> val
             {
                 final ClimateModificationType type = typeById(buf.readVarInt());
                 final boolean tag = buf.readBoolean();
-                final ResourceLocation id = ResourceLocation.STREAM_CODEC.decode(buf);
+                final Identifier id = Identifier.STREAM_CODEC.decode(buf);
                 final int value = buf.readVarInt();
                 values.add(new SyncedClimateItemValue(type, tag, id, value));
             }
@@ -57,7 +57,7 @@ public record SyncGreenhouseClimateItemsMessage(List<SyncedClimateItemValue> val
                 final SyncedClimateItemValue value = values.get(i);
                 buf.writeVarInt(value.type().ordinal());
                 buf.writeBoolean(value.tag());
-                ResourceLocation.STREAM_CODEC.encode(buf, value.id());
+                Identifier.STREAM_CODEC.encode(buf, value.id());
                 buf.writeVarInt(value.value());
             }
         }

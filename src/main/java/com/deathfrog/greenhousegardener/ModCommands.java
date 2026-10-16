@@ -1,15 +1,16 @@
 package com.deathfrog.greenhousegardener;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.server.players.NameAndId;
 
 import java.util.List;
 
-import com.deathfrog.greenhousegardener.core.colony.buildings.modules.GreenhouseBiomeModule;
 import com.deathfrog.greenhousegardener.core.network.HighlightFieldBlockMessage;
 import com.deathfrog.greenhousegardener.core.util.TraceUtils;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
-import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.permissions.Action;
 import com.minecolonies.core.commands.commandTypes.IMCCommand;
+import com.minecolonies.core.colony.buildingextensions.FarmField;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -89,7 +90,9 @@ public final class ModCommands
 
     private static boolean hasCommandPermission(final CommandSourceStack source)
     {
-        if (source.hasPermission(4))
+        // 26.1.2: numeric op levels were replaced by typed Permission constants;
+        // level 4 (server owner) is Permissions.COMMANDS_OWNER (PermissionLevel.OWNERS).
+        if (source.permissions().hasPermission(Permissions.COMMANDS_OWNER))
         {
             return true;
         }
@@ -100,7 +103,8 @@ public final class ModCommands
             return true;
         }
 
-        final GameProfile profile = entity instanceof Player player ? player.getGameProfile() : null;
+        // 26.1.2: MinecraftServer.isSingleplayerOwner() takes NameAndId instead of GameProfile.
+        final NameAndId profile = entity instanceof Player player ? player.nameAndId() : null;
         return profile != null && source.getServer() != null && source.getServer().isSingleplayerOwner(profile);
     }
 
@@ -155,36 +159,63 @@ public final class ModCommands
             IntegerArgumentType.getInteger(context, ARG_Y),
             IntegerArgumentType.getInteger(context, ARG_Z));
 
-        if (!canHighlightField(player, fieldPosition))
+        final FieldHighlightAccess access = getFieldHighlightAccess(player, fieldPosition);
+        if (access == FieldHighlightAccess.NOT_FOUND)
         {
+            context.getSource().sendFailure(Component.literal(
+                "No colony field available for highlighting was found at " + formatPosition(fieldPosition) + "."));
+            return 0;
+        }
+        if (access == FieldHighlightAccess.DENIED)
+        {
+            context.getSource().sendFailure(Component.literal(
+                "You do not have permission to highlight the colony field at " + formatPosition(fieldPosition) + "."));
             return 0;
         }
 
         new HighlightFieldBlockMessage(fieldPosition).sendToPlayer(player);
-        player.displayClientMessage(directionMessage(player, fieldPosition), true);
+        // 26.1.2: Player.displayClientMessage(Component, boolean) was removed; the overlay-aware
+        // overload only remains on ServerPlayer.sendSystemMessage(Component, boolean).
+        player.sendSystemMessage(directionMessage(player, fieldPosition), true);
         return Command.SINGLE_SUCCESS;
     }
 
-    private static boolean canHighlightField(final ServerPlayer player, final BlockPos fieldPosition)
+    private static FieldHighlightAccess getFieldHighlightAccess(final ServerPlayer player, final BlockPos fieldPosition)
     {
+        final boolean bypassColonyPermissions = hasCommandPermission(player.createCommandSourceStack());
+        boolean found = false;
+
         for (final IColony colony : IColonyManager.getInstance().getColonies(player.level()))
         {
-            if (!colony.getPermissions().hasPermission(player, Action.RECEIVE_MESSAGES))
+            final boolean isFarmField = colony.getServerBuildingManager()
+                .getBuildingExtensions(extension -> extension instanceof FarmField
+                    && fieldPosition.equals(extension.getPosition()))
+                .stream()
+                .findAny()
+                .isPresent();
+            if (isFarmField)
             {
-                continue;
-            }
-
-            for (final IBuilding building : colony.getServerBuildingManager().getBuildings().values())
-            {
-                final GreenhouseBiomeModule module = building.getModule(GreenhouseBiomeModule.class, candidate -> true);
-                if (module != null && module.isOwned(fieldPosition))
+                found = true;
+                if (bypassColonyPermissions || colony.getPermissions().hasPermission(player, Action.RECEIVE_MESSAGES))
                 {
-                    return true;
+                    return FieldHighlightAccess.ALLOWED;
                 }
             }
         }
 
-        return false;
+        return found ? FieldHighlightAccess.DENIED : FieldHighlightAccess.NOT_FOUND;
+    }
+
+    private static String formatPosition(final BlockPos position)
+    {
+        return position.getX() + ", " + position.getY() + ", " + position.getZ();
+    }
+
+    private enum FieldHighlightAccess
+    {
+        ALLOWED,
+        DENIED,
+        NOT_FOUND
     }
 
     private static Component directionMessage(final ServerPlayer player, final BlockPos fieldPosition)
@@ -198,10 +229,10 @@ public final class ModCommands
 
         if (horizontalDistance <= 1 && vertical.isBlank())
         {
-            return Component.literal("Highlighted greenhouse field at your position.");
+            return Component.literal("Highlighted colony field at your position.");
         }
 
-        return Component.literal("Highlighted greenhouse field " + direction + ", "
+        return Component.literal("Highlighted colony field " + direction + ", "
             + horizontalDistance + " blocks away" + vertical + ".");
     }
 

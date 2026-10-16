@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "tag": "greenhousegardener:meats"
-    },
-    {
-      "item": "minecolonies:nether_pepper"
-    },
-    {
-      "item": "minecraft:sugar"
-    }
+    "#greenhousegardener:meats",
+    "minecolonies:nether_pepper",
+    "minecraft:sugar"
   ],
   "result": {
     "id": "greenhousegardener:barbecue"

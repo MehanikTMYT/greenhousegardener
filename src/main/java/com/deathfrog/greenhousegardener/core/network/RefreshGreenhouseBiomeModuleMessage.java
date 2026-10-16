@@ -11,7 +11,7 @@ import com.minecolonies.core.network.messages.client.colony.ColonyViewBuildingVi
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -23,7 +23,7 @@ public record RefreshGreenhouseBiomeModuleMessage(BlockPos buildingPos) implemen
 {
     @SuppressWarnings("null")
     public static final Type<RefreshGreenhouseBiomeModuleMessage> ID =
-        new Type<>(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "refresh_greenhouse_biome_module"));
+        new Type<>(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "refresh_greenhouse_biome_module"));
 
     @SuppressWarnings("null")
     public static final StreamCodec<RegistryFriendlyByteBuf, RefreshGreenhouseBiomeModuleMessage> STREAM_CODEC = StreamCodec.composite(

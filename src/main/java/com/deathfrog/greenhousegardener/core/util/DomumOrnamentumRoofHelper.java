@@ -10,7 +10,7 @@ import com.ldtteam.domumornamentum.client.model.data.MaterialTextureData;
 import com.ldtteam.domumornamentum.entity.block.IMateriallyTexturedBlockEntity;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -52,9 +52,9 @@ public final class DomumOrnamentumRoofHelper
             return false;
         }
 
-        final Map<ResourceLocation, Block> componentMaterials = textureData
+        final Map<Identifier, Block> componentMaterials = textureData
             .retainComponentsFromBlock(texturedBlock)
-            .getTexturedComponents();
+            .components();
 
         for (final Block material : componentMaterials.values())
         {

@@ -14,7 +14,6 @@ import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
 
 public class BuildingGreenhouse extends AbstractBuilding
@@ -41,9 +40,13 @@ public class BuildingGreenhouse extends AbstractBuilding
     {
         final CompoundTag migrated = compound.copy();
 
-        if (migrated.contains(NbtTagConstants.TAG_BUILDING_MODULES, Tag.TAG_COMPOUND))
+        // NBT NOTE (26.1.2 port): CompoundTag.contains(String, int) was removed upstream; only the
+        // single-arg contains(String) remains. getCompound(String) also became Optional-based, replaced
+        // here by getCompoundOrEmpty(String), which still returns the same live/mutable nested tag when
+        // one is present (so in-place migrateModuleKey() mutations below still land inside `migrated`).
+        if (migrated.contains(NbtTagConstants.TAG_BUILDING_MODULES))
         {
-            final CompoundTag modules = migrated.getCompound(NbtTagConstants.TAG_BUILDING_MODULES);
+            final CompoundTag modules = migrated.getCompoundOrEmpty(NbtTagConstants.TAG_BUILDING_MODULES);
             migrateModuleKey(modules, LEGACY_BIOME_MODULE, BuildingModules.BIOME_MODULE.key);
             migrateModuleKey(modules, LEGACY_TEMPERATURE_MODULE, BuildingModules.TEMPERATURE_MODULE.key);
             migrateModuleKey(modules, LEGACY_HUMIDITY_MODULE, BuildingModules.HUMIDITY_MODULE.key);
@@ -56,9 +59,15 @@ public class BuildingGreenhouse extends AbstractBuilding
     @SuppressWarnings("null")
     private static void migrateModuleKey(final CompoundTag modules, final @Nonnull String legacyKey, final @Nonnull String currentKey)
     {
-        if (!modules.contains(currentKey) && modules.contains(legacyKey, Tag.TAG_COMPOUND))
+        if (modules.contains(currentKey))
         {
-            modules.put(currentKey, modules.get(legacyKey).copy());
+            return;
+        }
+
+        // Type-checked replacement for the removed contains(legacyKey, Tag.TAG_COMPOUND) overload.
+        if (modules.get(legacyKey) instanceof CompoundTag legacyTag)
+        {
+            modules.put(currentKey, legacyTag.copy());
         }
     }
 

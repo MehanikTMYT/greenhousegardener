@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "greenhousegardener:sourdough_bread",
+    "minecolonies:cheddar_cheese",
+    "greenhousegardener:pickles",
+    "greenhousegardener:mustard",
+    "minecraft:apple"
+  ],
+  "result": {
+    "count": 1,
+    "id": "greenhousegardener:ploughmans_lunch"
+  }
+}

@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:potato"
-    },
-    {
-      "item": "greenhousegardener:corn_oil"
-    }
+    "minecraft:potato",
+    "greenhousegardener:corn_oil"
   ],
   "result": {
     "id": "greenhousegardener:potato_chips"

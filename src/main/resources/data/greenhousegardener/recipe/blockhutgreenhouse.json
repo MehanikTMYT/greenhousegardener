@@ -2,18 +2,10 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "B": {
-      "item": "structurize:sceptergold"
-    },
-    "X": {
-      "tag": "minecraft:planks"
-    },
-    "H": {
-      "item": "minecraft:lava_bucket"
-    },
-    "C": {
-      "item": "minecraft:water_bucket"
-    }
+    "B": "structurize:sceptergold",
+    "X": "#minecraft:planks",
+    "H": "minecraft:lava_bucket",
+    "C": "minecraft:water_bucket"
   },
   "pattern": [
     "XXX",

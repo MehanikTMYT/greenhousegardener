@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecolonies:clipboard",
+    "minecolonies:blockhutfield",
+    "minecraft:book"
+  ],
+  "result": {
+    "count": 1,
+    "id": "greenhousegardener:crop_journal"
+  }
+}

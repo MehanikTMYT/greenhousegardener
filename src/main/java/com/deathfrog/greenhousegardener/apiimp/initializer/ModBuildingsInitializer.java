@@ -15,7 +15,7 @@ import com.minecolonies.apiimp.CommonMinecoloniesAPIImpl;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ModBuildingsInitializer
@@ -33,11 +33,12 @@ public final class ModBuildingsInitializer
             greenhouseBuilder.setBuildingBlock(ModBlocks.blockHutGreenhouse.get());
             greenhouseBuilder.setBuildingProducer(BuildingGreenhouse::new);
             greenhouseBuilder.setBuildingViewProducer(() -> GreenhouseView::new);
-            greenhouseBuilder.setRegistryName(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, ModBuildings.GREENHOUSE_ID));
+            greenhouseBuilder.setRegistryName(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, ModBuildings.GREENHOUSE_ID));
             greenhouseBuilder.addBuildingModuleProducer(BuildingModules.HORTICULTURIST_WORK);
             greenhouseBuilder.addBuildingModuleProducer(BuildingModules.BIOME_MODULE);
             greenhouseBuilder.addBuildingModuleProducer(BuildingModules.TEMPERATURE_MODULE);
             greenhouseBuilder.addBuildingModuleProducer(BuildingModules.HUMIDITY_MODULE);
+            greenhouseBuilder.addBuildingModuleProducer(BuildingModules.COLONY_CROPS_MODULE);
             greenhouseBuilder.addBuildingModuleProducer(com.minecolonies.core.colony.buildings.modules.BuildingModules.MIN_STOCK);  
             greenhouseBuilder.addBuildingModuleProducer(com.minecolonies.core.colony.buildings.modules.BuildingModules.STATS_MODULE);  
 
@@ -48,7 +49,7 @@ public final class ModBuildingsInitializer
             ranchBuilder.setBuildingBlock(ModBlocks.blockHutRanch.get());
             ranchBuilder.setBuildingProducer(BuildingRanch::new);
             ranchBuilder.setBuildingViewProducer(() -> RanchView::new);
-            ranchBuilder.setRegistryName(ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, ModBuildings.RANCH_ID));
+            ranchBuilder.setRegistryName(Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, ModBuildings.RANCH_ID));
             ranchBuilder.addBuildingModuleProducer(BuildingModules.RANCHER_WORK);
             ranchBuilder.addBuildingModuleProducer(BuildingModules.RANCH_SETTINGS);
             ranchBuilder.addBuildingModuleProducer(BuildingModules.RANCH_HERDING);
@@ -65,7 +66,7 @@ public final class ModBuildingsInitializer
     {
         @SuppressWarnings("null")
         final @Nonnull ResourceKey<Registry<BuildingEntry>> buildingsRegistry = CommonMinecoloniesAPIImpl.BUILDINGS;
-        final ResourceLocation registryName = buildingEntry.getRegistryName();
+        final Identifier registryName = buildingEntry.getRegistryName();
 
         if (registryName == null)
         {

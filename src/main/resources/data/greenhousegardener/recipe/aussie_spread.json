@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:durum"
-    },
-    {
-      "item": "minecolonies:soysauce"
-    }
+    "minecolonies:durum",
+    "minecolonies:soysauce"
   ],
   "result": {
     "id": "greenhousegardener:aussie_spread"

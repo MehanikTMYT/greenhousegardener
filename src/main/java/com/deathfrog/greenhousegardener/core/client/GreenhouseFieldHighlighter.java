@@ -6,13 +6,10 @@ import com.minecolonies.core.client.render.worldevent.HighlightManager;
 import com.minecolonies.core.client.render.worldevent.highlightmanager.TimedBoxRenderData;
 
 import net.minecraft.core.BlockPos;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Client-side field highlight rendering hooks.
  */
-@OnlyIn(Dist.CLIENT)
 public final class GreenhouseFieldHighlighter
 {
     private static final String HIGHLIGHT_KEY = "greenhousegardenerFieldLocation";
@@ -24,7 +21,7 @@ public final class GreenhouseFieldHighlighter
     }
 
     /**
-     * Highlight one greenhouse field block in the world.
+     * Highlight one colony field block in the world.
      *
      * @param fieldPos field anchor position
      */
@@ -42,6 +39,6 @@ public final class GreenhouseFieldHighlighter
             new TimedBoxRenderData(fieldPos)
                 .setDuration(HIGHLIGHT_DURATION)
                 .setColor(FIELD_HIGHLIGHT_COLOR)
-                .addText("Greenhouse field"));
+                .addText("Colony field"));
     }
 }

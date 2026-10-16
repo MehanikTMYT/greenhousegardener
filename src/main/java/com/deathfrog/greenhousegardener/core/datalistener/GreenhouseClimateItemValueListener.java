@@ -10,13 +10,15 @@ import javax.annotation.Nonnull;
 import org.jetbrains.annotations.NotNull;
 import com.deathfrog.greenhousegardener.GreenhouseGardenerMod;
 import com.deathfrog.greenhousegardener.core.colony.buildings.modules.GreenhouseClimateItemModule.ClimateModificationType;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.tags.ItemTags;
@@ -29,9 +31,15 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Loads datapack-defined greenhouse climate item values.
  */
-public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReloadListener
+public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    // 26.1.2: SimpleJsonResourceReloadListener became Codec<T>-based, replacing the old (Gson, String
+    // directory) constructor. This listener still hand-parses raw JsonObject content via GsonHelper (same
+    // as before the port), so it is parameterized on JsonElement using a passthrough codec rather than
+    // migrating to a typed record codec -- preserves the exact existing parsing/validation behavior.
+    private static final Codec<JsonElement> JSON_ELEMENT_CODEC = Codec.PASSTHROUGH.xmap(
+        dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue(),
+        json -> new Dynamic<>(JsonOps.INSTANCE, json));
     private static final String DIRECTORY = "greenhouse_climate_items";
     private static final String TAG_REPLACE = "replace";
 
@@ -42,7 +50,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
 
     private GreenhouseClimateItemValueListener()
     {
-        super(GSON, DIRECTORY);
+        super(JSON_ELEMENT_CODEC, FileToIdConverter.json(DIRECTORY));
         for (final ClimateModificationType type : ClimateModificationType.values())
         {
             itemValues.put(type, new HashMap<>());
@@ -51,7 +59,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
     }
 
     @Override
-    protected void apply(@NotNull final @Nonnull Map<ResourceLocation, JsonElement> object,
+    protected void apply(@NotNull final @Nonnull Map<Identifier, JsonElement> object,
         @NotNull final @Nonnull ResourceManager resourceManager,
         @NotNull final @Nonnull ProfilerFiller profiler)
     {
@@ -191,7 +199,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
 
         for (final SyncedClimateItemValue value : values)
         {
-            ResourceLocation id = value.id();
+            Identifier id = value.id();
 
             if (id == null) continue;
 
@@ -210,7 +218,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
         }
     }
 
-    private void loadClimateItemFile(final ResourceLocation file, final JsonElement elem)
+    private void loadClimateItemFile(final Identifier file, final JsonElement elem)
     {
         try
         {
@@ -248,7 +256,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
     }
 
     @SuppressWarnings("null")
-    private void loadValueMap(final ResourceLocation file, final ClimateModificationType type, final JsonObject values)
+    private void loadValueMap(final Identifier file, final ClimateModificationType type, final JsonObject values)
     {
         for (final Map.Entry<String, JsonElement> entry : values.entrySet())
         {
@@ -261,7 +269,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
             final String key = entry.getKey();
             if (key.startsWith("#"))
             {
-                tagValues.get(type).put(ItemTags.create(ResourceLocation.parse(key.substring(1))), value);
+                tagValues.get(type).put(ItemTags.create(Identifier.parse(key.substring(1))), value);
                 continue;
             }
 
@@ -279,7 +287,7 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
 
     private static Optional<Item> parseItem(final @Nonnull String itemId)
     {
-        final ResourceLocation location = ResourceLocation.parse(itemId);
+        final Identifier location = Identifier.parse(itemId);
         return BuiltInRegistries.ITEM.getOptional(location);
     }
 
@@ -302,6 +310,6 @@ public class GreenhouseClimateItemValueListener extends SimpleJsonResourceReload
      * @param id    item id or item tag id
      * @param value CCU value
      */
-    public record SyncedClimateItemValue(ClimateModificationType type, boolean tag, ResourceLocation id, int value)
+    public record SyncedClimateItemValue(ClimateModificationType type, boolean tag, Identifier id, int value)
     {}
 }

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "greenhousegardener:mustard_seed",
+    "greenhousegardener:mustard_seed",
+    "minecolonies:large_water_bottle",
+    "minecraft:wheat"
+  ],
+  "result": {
+    "count": 2,
+    "id": "greenhousegardener:mustard_poultice"
+  }
+}

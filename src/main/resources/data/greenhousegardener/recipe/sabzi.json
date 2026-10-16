@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:butternut_squash"
-    },
-    {
-      "item": "minecolonies:cabbage"
-    },
-    {
-      "item": "minecolonies:garlic"
-    }
+    "minecolonies:butternut_squash",
+    "minecolonies:cabbage",
+    "minecolonies:garlic"
   ],
   "result": {
     "id": "greenhousegardener:sabzi"

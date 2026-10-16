@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "greenhousegardener:pickles",
+    "greenhousegardener:pickles",
+    "minecolonies:onion"
+  ],
+  "result": {
+    "count": 2,
+    "id": "greenhousegardener:relish"
+  }
+}

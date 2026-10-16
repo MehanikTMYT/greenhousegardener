@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:porkchop"
-    },
-    {
-      "item": "minecolonies:onion"
-    },
-    {
-      "item": "minecolonies:cabbage"
-    }
+    "minecraft:porkchop",
+    "minecolonies:onion",
+    "minecolonies:cabbage"
   ],
   "result": {
     "id": "greenhousegardener:rouladen"

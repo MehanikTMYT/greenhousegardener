@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:egg"
-    },
-    {
-      "item": "greenhousegardener:corn_oil"
-    }
+    "minecraft:egg",
+    "greenhousegardener:corn_oil"
   ],
   "result": {
     "id": "greenhousegardener:mayo"

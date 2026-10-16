@@ -4,7 +4,7 @@ import javax.annotation.Nonnull;
 
 import com.deathfrog.greenhousegardener.GreenhouseGardenerMod;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.core.registries.Registries;
@@ -28,7 +28,7 @@ public final class ModTags
      */
     public static final class BLOCKS
     {
-        public static final ResourceLocation GREENHOUSE_ROOF_KEY = tag("greenhouse_roof");
+        public static final Identifier GREENHOUSE_ROOF_KEY = tag("greenhouse_roof");
         @SuppressWarnings("null")
         public @Nonnull static final TagKey<Block> GREENHOUSE_ROOF = BlockTags.create(GREENHOUSE_ROOF_KEY);
 
@@ -38,9 +38,9 @@ public final class ModTags
          * @param path tag path
          * @return namespaced resource location
          */
-        private static ResourceLocation tag(final @Nonnull String path)
+        private static Identifier tag(final @Nonnull String path)
         {
-            return ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path);
+            return Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path);
         }
     }
 
@@ -67,7 +67,7 @@ public final class ModTags
         private static TagKey<EntityType<?>> tag(final String path)
         {
             return TagKey.create(Registries.ENTITY_TYPE,
-                ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path));
+                Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path));
         }
     }
 }

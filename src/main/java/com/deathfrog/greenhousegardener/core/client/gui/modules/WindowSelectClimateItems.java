@@ -27,7 +27,7 @@ import com.minecolonies.core.client.gui.AbstractWindowSkeleton;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import static com.minecolonies.api.util.constant.WindowConstants.BUTTON_SELECT;
@@ -68,7 +68,7 @@ public class WindowSelectClimateItems extends AbstractWindowSkeleton
         final ToIntFunction<ItemStack> valueResolver,
         final BiConsumer<ItemStack, Integer> consumer)
     {
-        super(origin, ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "gui/windowselectclimateitems.xml"));
+        super(origin, Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "gui/windowselectclimateitems.xml"));
         this.resourceList = findPaneOfTypeByID("resources", ScrollingList.class);
         this.test = test;
         this.valueResolver = valueResolver;
@@ -214,8 +214,10 @@ public class WindowSelectClimateItems extends AbstractWindowSkeleton
      */
     private boolean matchesFilter(final ItemStack stack)
     {
+        // 26.1.2: ItemStack.getDescriptionId() was removed (it used to just delegate to the item); the stack's
+        // underlying Item still exposes the (now stack-independent) translation key via getDescriptionId().
         return filter.isEmpty()
-            || stack.getDescriptionId().toLowerCase(Locale.US).contains(filter.toLowerCase(Locale.US))
+            || stack.getItem().getDescriptionId().toLowerCase(Locale.US).contains(filter.toLowerCase(Locale.US))
             || stack.getHoverName().getString().toLowerCase(Locale.US).contains(filter.toLowerCase(Locale.US));
     }
 

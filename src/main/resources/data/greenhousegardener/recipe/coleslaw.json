@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:cabbage"
-    },
-    {
-      "item": "minecraft:carrot"
-    },
-    {
-      "item": "greenhousegardener:mayo"
-    }
+    "minecolonies:cabbage",
+    "minecraft:carrot",
+    "greenhousegardener:mayo"
   ],
   "result": {
     "id": "greenhousegardener:coleslaw"

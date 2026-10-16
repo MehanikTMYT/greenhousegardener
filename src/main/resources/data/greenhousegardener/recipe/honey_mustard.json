@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "greenhousegardener:mustard_seed",
+    "greenhousegardener:mustard_seed",
+    "minecraft:honey_bottle"
+  ],
+  "result": {
+    "id": "greenhousegardener:honey_mustard"
+  }
+}

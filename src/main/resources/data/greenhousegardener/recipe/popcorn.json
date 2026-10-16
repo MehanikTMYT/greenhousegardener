@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:corn"
-    },
-    {
-      "item": "minecolonies:butter"
-    }
+    "minecolonies:corn",
+    "minecolonies:butter"
   ],
   "result": {
     "id": "greenhousegardener:popcorn"

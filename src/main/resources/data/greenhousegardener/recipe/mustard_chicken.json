@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "greenhousegardener:corn_oil",
+    "minecraft:chicken",
+    "greenhousegardener:mustard_seed",
+    "minecolonies:mint"
+  ],
+  "result": {
+    "id": "greenhousegardener:mustard_chicken"
+  }
+}

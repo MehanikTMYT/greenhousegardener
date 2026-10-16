@@ -4,7 +4,6 @@ import com.deathfrog.greenhousegardener.GreenhouseGardenerMod;
 import com.deathfrog.greenhousegardener.api.tileentities.GreenhouseTileEntities;
 import com.deathfrog.greenhousegardener.api.tileentities.GreenhouseTileEntityColonyBuilding;
 import com.deathfrog.greenhousegardener.core.colony.buildings.ModBuildings;
-import com.mojang.datafixers.DSL;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,9 +17,12 @@ public final class TileEntityInitializer
 
     static
     {
+        // 26.1.2: BlockEntityType.Builder (requiring .build(DSL.remainderType())) was removed in favor of
+        // calling the BlockEntityType(factory, Block...) constructor directly -- matches MineColonies' own
+        // TileEntityInitializer.java pattern for its equivalent colony-building block entity type.
         GreenhouseTileEntities.BUILDING = BLOCK_ENTITIES.register(
           "greenhouse_colonybuilding",
-          () -> BlockEntityType.Builder.of(GreenhouseTileEntityColonyBuilding::new, ModBuildings.getHuts()).build(DSL.remainderType()));
+          () -> new BlockEntityType<>(GreenhouseTileEntityColonyBuilding::new, ModBuildings.getHuts()));
     }
 
     private TileEntityInitializer()

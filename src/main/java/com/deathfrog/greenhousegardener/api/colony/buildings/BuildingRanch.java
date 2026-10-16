@@ -1,6 +1,8 @@
 package com.deathfrog.greenhousegardener.api.colony.buildings;
 
 import com.deathfrog.greenhousegardener.GreenhouseGardenerMod;
+import com.deathfrog.greenhousegardener.Config;
+import com.deathfrog.greenhousegardener.ModResearch;
 import com.deathfrog.greenhousegardener.core.colony.buildings.ModBuildings;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.modules.settings.ISettingKey;
@@ -8,7 +10,7 @@ import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.settings.BoolSetting;
 import com.minecolonies.core.colony.buildings.modules.settings.SettingKey;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nonnull;
 
@@ -55,6 +57,18 @@ public class BuildingRanch extends AbstractBuilding
     }
 
     /**
+     * Maximum number of exact managed entity types supported by this Ranch.
+     *
+     * @return configured base type count plus the optional research bonus
+     */
+    public int getSupportedHerdTypeCapacity()
+    {
+        final int researchBonus = (int) Math.floor(getColony().getResearchManager()
+            .getResearchEffects().getEffectStrength(ModResearch.RESEARCH_ADDITIONAL_RANCH_HERD));
+        return Config.supportedRanchAnimalTypes.get() + Math.max(0, researchBonus);
+    }
+
+    /**
      * Returns the schematic identifier used by MineColonies.
      *
      * @return Ranch schematic name
@@ -74,6 +88,6 @@ public class BuildingRanch extends AbstractBuilding
     private static ISettingKey<BoolSetting> setting(final @Nonnull String path)
     {
         return new SettingKey<>(BoolSetting.class,
-            ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path));
+            Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, path));
     }
 }

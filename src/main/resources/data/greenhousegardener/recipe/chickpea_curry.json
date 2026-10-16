@@ -2,18 +2,10 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:chickpea"
-    },
-    {
-      "item": "minecolonies:nether_pepper"
-    },
-    {
-      "item": "minecolonies:onion"
-    },
-    {
-      "item": "minecolonies:garlic"
-    }
+    "minecolonies:chickpea",
+    "minecolonies:nether_pepper",
+    "minecolonies:onion",
+    "minecolonies:garlic"
   ],
   "result": {
     "id": "greenhousegardener:chickpea_curry"

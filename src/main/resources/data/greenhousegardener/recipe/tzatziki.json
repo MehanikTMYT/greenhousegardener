@@ -2,18 +2,10 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:cucumber"
-    },
-    {
-      "item": "minecolonies:mint"
-    },
-    {
-      "item": "minecolonies:garlic"
-    },
-    {
-      "item": "minecolonies:yogurt"
-    }
+    "greenhousegardener:cucumber",
+    "minecolonies:mint",
+    "minecolonies:garlic",
+    "minecolonies:yogurt"
   ],
   "result": {
     "count": 2,

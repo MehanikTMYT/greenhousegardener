@@ -1,32 +1,45 @@
 package com.deathfrog.greenhousegardener.core.colony.buildings.modules;
+import net.minecraft.core.BlockPos;
 
 import com.deathfrog.greenhousegardener.api.colony.buildings.BuildingRanch;
 import com.deathfrog.greenhousegardener.core.ModTags;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.modules.AbstractBuildingModule;
 import com.minecolonies.api.colony.buildings.modules.ITickingModule;
+import com.minecolonies.api.colony.buildings.modules.IPersistentModule;
 import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.api.util.InventoryUtils;
 import com.minecolonies.api.util.WorldUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
 
 /**
  * Colony-tick snapshot of the managed herds currently inside a Ranch.
  */
-public class RanchHerdListModule extends AbstractBuildingModule implements ITickingModule
+public class RanchHerdListModule extends AbstractBuildingModule implements ITickingModule, IPersistentModule
 {
+    private static final String TAG_HERD_ORDER = "herdOrder";
     /** Capability flag for entity types that can be milked into bowls. */
     public static final int BOWL_MILKABLE = 1;
     /** Capability flag for entity types that can be milked into buckets. */
@@ -34,7 +47,8 @@ public class RanchHerdListModule extends AbstractBuildingModule implements ITick
     /** Capability flag for entity types that can be sheared. */
     public static final int SHEARABLE = 1 << 2;
 
-    private Map<ResourceLocation, HerdSnapshot> herds = Map.of();
+    private Map<Identifier, HerdSnapshot> herds = Map.of();
+    private List<Identifier> herdOrder = List.of();
 
     /**
      * Rebuilds the managed-herd snapshot on the slower colony tick.
@@ -54,24 +68,108 @@ public class RanchHerdListModule extends AbstractBuildingModule implements ITick
             return;
         }
 
-        final Map<ResourceLocation, HerdSnapshot> currentHerds =
-            new TreeMap<>(Comparator.comparing(ResourceLocation::toString));
+        final Map<Identifier, HerdSnapshot> currentHerds = new LinkedHashMap<>();
 
         for (final Animal animal : WorldUtil.getEntitiesWithinBuilding(
             colony.getWorld(), Animal.class, building, RanchHerdingModule::isManaged))
         {
             final EntityType<?> type = animal.getType();
-            final ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+            final Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
             currentHerds.compute(id, (ignored, herd) -> herd == null
                 ? new HerdSnapshot(1, capabilities(animal), preferredBreedingFood(animal))
                 : new HerdSnapshot(herd.count() + 1, herd.capabilities(), herd.breedingFood()));
         }
 
-        if (!currentHerds.equals(herds))
+        reconcilePresentTypes(currentHerds.keySet());
+
+        final Map<Identifier, HerdSnapshot> orderedHerds = new LinkedHashMap<>();
+        herdOrder.forEach(type ->
         {
-            herds = Collections.unmodifiableMap(new LinkedHashMap<>(currentHerds));
+            final HerdSnapshot herd = currentHerds.get(type);
+            if (herd != null)
+            {
+                orderedHerds.put(type, herd);
+            }
+        });
+
+        if (!orderedHerds.equals(herds))
+        {
+            herds = Collections.unmodifiableMap(orderedHerds);
             markDirty();
         }
+    }
+
+    @Override
+    public void deserializeNBT(@NotNull final HolderLookup.Provider provider, final CompoundTag compound)
+    {
+        final List<Identifier> loadedOrder = new ArrayList<>();
+        final Set<Identifier> seen = new HashSet<>();
+        final ListTag entries = compound.getListOrEmpty(TAG_HERD_ORDER);
+        for (int i = 0; i < entries.size(); i++)
+        {
+            final Identifier id = Identifier.tryParse(entries.getString(i) + "");
+            if (id != null && seen.add(id))
+            {
+                loadedOrder.add(id);
+            }
+        }
+        herdOrder = List.copyOf(loadedOrder);
+    }
+
+    @Override
+    public void serializeNBT(@NotNull final HolderLookup.Provider provider, final CompoundTag compound)
+    {
+        final ListTag entries = new ListTag();
+        herdOrder.forEach(type -> entries.add(StringTag.valueOf(type.toString() + "")));
+        compound.put(TAG_HERD_ORDER, entries);
+    }
+
+    /**
+     * Reconciles persisted first-seen ordering with the managed types currently
+     * present in the Ranch. Absent types relinquish their place immediately.
+     *
+     * @param presentTypes exact managed entity types found in the Ranch
+     */
+    public void reconcilePresentTypes(final Collection<Identifier> presentTypes)
+    {
+        final List<Identifier> reconciled = RanchHerdOrder.reconcile(herdOrder, presentTypes);
+        if (!reconciled.equals(herdOrder))
+        {
+            herdOrder = List.copyOf(reconciled);
+            markDirty();
+        }
+    }
+
+    /**
+     * Reconciles ordering from exact runtime entity types.
+     *
+     * @param presentTypes entity types currently present
+     */
+    public void reconcileEntityTypes(final Collection<EntityType<?>> presentTypes)
+    {
+        reconcilePresentTypes(presentTypes.stream().map(BuiltInRegistries.ENTITY_TYPE::getKey).toList());
+    }
+
+    /**
+     * Tests whether an exact entity type currently occupies a supported slot.
+     *
+     * @param type runtime entity type
+     * @return true when the type is within the effective configured limit
+     */
+    public boolean isSupported(final @Nonnull EntityType<?> type)
+    {
+        final int index = herdOrder.indexOf(BuiltInRegistries.ENTITY_TYPE.getKey(type));
+        return index >= 0 && index < getSupportedTypeCapacity();
+    }
+
+    public int getSupportedTypeCapacity()
+    {
+        return building instanceof BuildingRanch ranch ? ranch.getSupportedHerdTypeCapacity() : 0;
+    }
+
+    public boolean hasUnsupportedTypes()
+    {
+        return herdOrder.size() > getSupportedTypeCapacity();
     }
 
     /**
@@ -84,12 +182,14 @@ public class RanchHerdListModule extends AbstractBuildingModule implements ITick
     public void serializeToView(@NotNull final RegistryFriendlyByteBuf buf)
     {
         buf.writeInt(building instanceof BuildingRanch ranch ? ranch.getHerdCapacity() : 0);
+        buf.writeInt(getSupportedTypeCapacity());
         buf.writeInt(herds.size());
         herds.forEach((type, herd) ->
         {
-            buf.writeResourceLocation(type);
+            buf.writeIdentifier(type);
             buf.writeInt(herd.count());
             buf.writeInt(herd.capabilities());
+            buf.writeBoolean(herdOrder.indexOf(type) < getSupportedTypeCapacity());
             ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, herd.breedingFood());
         });
     }
@@ -99,9 +199,9 @@ public class RanchHerdListModule extends AbstractBuildingModule implements ITick
      *
      * @return a defensive copy containing entity type IDs and their counts
      */
-    public Map<ResourceLocation, Integer> getHerdCounts()
+    public Map<Identifier, Integer> getHerdCounts()
     {
-        final Map<ResourceLocation, Integer> counts = new LinkedHashMap<>();
+        final Map<Identifier, Integer> counts = new LinkedHashMap<>();
         herds.forEach((type, herd) -> counts.put(type, herd.count()));
         return counts;
     }
@@ -118,15 +218,15 @@ public class RanchHerdListModule extends AbstractBuildingModule implements ITick
     {
         final EntityType<?> type = animal.getType();
         int capabilities = 0;
-        if (type.is(ModTags.ENTITY_TYPES.RANCH_BOWL_MILKABLE))
+        if (type.builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BOWL_MILKABLE))
         {
             capabilities |= BOWL_MILKABLE;
         }
-        if (type.is(ModTags.ENTITY_TYPES.RANCH_BUCKET_MILKABLE))
+        if (type.builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BUCKET_MILKABLE))
         {
             capabilities |= BUCKET_MILKABLE;
         }
-        if (type.is(ModTags.ENTITY_TYPES.RANCH_SHEARABLE)
+        if (type.builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_SHEARABLE)
             && RanchShearability.supports(animal))
         {
             capabilities |= SHEARABLE;
@@ -144,7 +244,7 @@ public class RanchHerdListModule extends AbstractBuildingModule implements ITick
     @SuppressWarnings("null")
     private ItemStack preferredBreedingFood(final Animal representative)
     {
-        if (!representative.getType().is(ModTags.ENTITY_TYPES.RANCH_BREEDABLE))
+        if (!representative.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BREEDABLE))
         {
             return ItemStack.EMPTY;
         }

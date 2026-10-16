@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:peas"
-    },
-    {
-      "item": "minecolonies:mint"
-    },
-    {
-      "item": "minecolonies:butter"
-    }
+    "minecolonies:peas",
+    "minecolonies:mint",
+    "minecolonies:butter"
   ],
   "result": {
     "id": "greenhousegardener:minty_peas"

@@ -20,7 +20,7 @@ import com.minecolonies.api.crafting.ItemStorage;
 import com.minecolonies.core.client.gui.AbstractModuleWindow;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -54,7 +54,7 @@ public abstract class WindowClimateItemModule<T extends GreenhouseClimateItemMod
         final ClimateModificationType increaseType,
         final ClimateModificationType decreaseType)
     {
-        super(moduleView, ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "gui/layouthuts/layoutclimateitemmodule.xml"));
+        super(moduleView, Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "gui/layouthuts/layoutclimateitemmodule.xml"));
         this.moduleType = moduleType;
         this.increaseType = increaseType;
         this.decreaseType = decreaseType;

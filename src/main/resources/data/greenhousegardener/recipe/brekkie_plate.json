@@ -2,21 +2,11 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:porkchop"
-    },
-    {
-      "item": "minecraft:egg"
-    },
-    {
-      "item": "minecraft:egg"
-    },
-    {
-      "item": "minecraft:bread"
-    },
-    {
-      "item": "minecraft:brown_mushroom"
-    }
+    "minecraft:porkchop",
+    "minecraft:egg",
+    "minecraft:egg",
+    "minecraft:bread",
+    "minecraft:brown_mushroom"
   ],
   "result": {
     "id": "greenhousegardener:brekkie_plate"

@@ -99,13 +99,13 @@ public class RanchHerdingModule extends AnimalHerdingModule
 
         return switch (action)
         {
-            case BREED -> animal.getType().is(ModTags.ENTITY_TYPES.RANCH_BREEDABLE);
-            case FEED -> animal.getType().is(ModTags.ENTITY_TYPES.RANCH_FEEDABLE);
-            case BUTCHER -> animal.getType().is(ModTags.ENTITY_TYPES.RANCH_BUTCHERABLE)
+            case BREED -> animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BREEDABLE);
+            case FEED -> animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_FEEDABLE);
+            case BUTCHER -> animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BUTCHERABLE)
                 && RanchAnimalProtection.mayButcher(animal);
-            case SHEAR -> animal.getType().is(ModTags.ENTITY_TYPES.RANCH_SHEARABLE);
-            case MILK -> animal.getType().is(ModTags.ENTITY_TYPES.RANCH_BUCKET_MILKABLE)
-                || animal.getType().is(ModTags.ENTITY_TYPES.RANCH_BOWL_MILKABLE);
+            case SHEAR -> animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_SHEARABLE);
+            case MILK -> animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BUCKET_MILKABLE)
+                || animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_BOWL_MILKABLE);
             default -> true;
         };
     }
@@ -127,7 +127,7 @@ public class RanchHerdingModule extends AnimalHerdingModule
     @SuppressWarnings("null")
     public static boolean isManaged(final Animal animal)
     {
-        return animal.getType().is(ModTags.ENTITY_TYPES.RANCH_ANIMALS)
-            && !animal.getType().is(ModTags.ENTITY_TYPES.RANCH_EXCLUDED);
+        return animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_ANIMALS)
+            && !animal.getType().builtInRegistryHolder().is(ModTags.ENTITY_TYPES.RANCH_EXCLUDED);
     }
 }

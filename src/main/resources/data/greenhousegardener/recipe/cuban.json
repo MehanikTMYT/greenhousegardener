@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:porkchop",
+    "greenhousegardener:pickles",
+    "minecolonies:cheddar_cheese",
+    "greenhousegardener:mustard",
+    "#c:foods/bread"
+  ],
+  "result": {
+    "count": 2,
+    "id": "greenhousegardener:cuban"
+  }
+}

@@ -13,7 +13,7 @@ import com.deathfrog.greenhousegardener.api.colony.buildings.moduleviews.Greenho
 import com.deathfrog.greenhousegardener.api.colony.buildings.moduleviews.GreenhouseBiomeModuleView.FieldBiomeView;
 import com.deathfrog.greenhousegardener.core.colony.buildings.modules.GreenhouseBiomeModule.HumiditySetting;
 import com.deathfrog.greenhousegardener.core.colony.buildings.modules.GreenhouseBiomeModule.TemperatureSetting;
-import com.deathfrog.greenhousegardener.core.network.RefreshGreenhouseBiomeModuleMessage;
+import com.deathfrog.greenhousegardener.core.network.RefreshGreenhouseBuildingViewMessage;
 import com.deathfrog.greenhousegardener.core.network.SaveGreenhouseBiomeFieldsMessage;
 import com.deathfrog.greenhousegardener.core.network.SaveGreenhouseBiomeFieldsMessage.FieldChange;
 import com.ldtteam.blockui.BOGuiGraphics;
@@ -31,13 +31,14 @@ import com.ldtteam.blockui.views.ScrollingList;
 import com.ldtteam.blockui.views.View;
 import com.minecolonies.core.client.gui.AbstractModuleWindow;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -75,7 +76,7 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
      */
     public WindowBiomeModule(final GreenhouseBiomeModuleView moduleView)
     {
-        super(moduleView, ResourceLocation.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "gui/layouthuts/layoutbiomemodule.xml"));
+        super(moduleView, Identifier.fromNamespaceAndPath(GreenhouseGardenerMod.MODID, "gui/layouthuts/layoutbiomemodule.xml"));
         this.fieldList = window.findPaneOfTypeByID(FIELD_LIST, ScrollingList.class);
         registerButton(SAVE_CHANGES, this::saveChanges);
     }
@@ -87,7 +88,7 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
     public void onOpened()
     {
         super.onOpened();
-        new RefreshGreenhouseBiomeModuleMessage(buildingView.getPosition()).sendToServer();
+        new RefreshGreenhouseBuildingViewMessage(buildingView.getPosition()).sendToServer();
 
         final Image help = findPaneOfTypeByID(IMAGE_HELP, Image.class);
         final AbstractTextBuilder.TooltipBuilder helpTipBuilder = PaneBuilders.tooltipBuilder().hoverPane(help);
@@ -291,13 +292,13 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
             if (highlightButton != null)
             {
                 highlightButton.setHandler(button -> highlightField(field.position()));
-                addPositionTooltip(highlightButton, field);
+                addPositionTooltip(highlightButton, field, draft);
             }
 
-            addPositionTooltip(tempDropdown, field);
-            addPositionTooltip(humidityDropdown, field);
-            addPositionTooltip(seedIcon, field);
-            addPositionTooltip(ownedCheckbox, field);
+            addPositionTooltip(tempDropdown, field, draft);
+            addPositionTooltip(humidityDropdown, field, draft);
+            addPositionTooltip(seedIcon, field, draft);
+            addPositionTooltip(ownedCheckbox, field, draft);
         }
         finally
         {
@@ -338,7 +339,7 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
      * @param fieldPosition field anchor position
      */
     @SuppressWarnings("null")
-    private static void highlightField(final BlockPos fieldPosition)
+    static void highlightField(final BlockPos fieldPosition)
     {
         final Minecraft minecraft = Minecraft.getInstance();
         ClientPacketListener listener = minecraft.getConnection();
@@ -480,7 +481,9 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
 
         if (player != null)
         {
-            player.displayClientMessage(Component.translatable(translationKey), true);
+            // 26.1.2: Player.displayClientMessage(Component, boolean) was removed; the overlay=true case is
+            // now its own dedicated method, Player.sendOverlayMessage(Component).
+            player.sendOverlayMessage(Component.translatable(translationKey));
         }
     }
 
@@ -603,7 +606,9 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
      */
     private static boolean isModified(final FieldBiomeView field, final TemperatureSetting temperature, final HumiditySetting humidity)
     {
-        return temperature != field.naturalTemperature() || humidity != field.naturalHumidity();
+        // Every owned climate selection is an explicit request for the corresponding tagged GG overlay.
+        // Numeric equality with the natural biome does not guarantee MineColonies crop-tag compatibility.
+        return true;
     }
 
     /**
@@ -707,8 +712,10 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
      *
      * @param pane pane receiving the tooltip
      * @param field field displayed by the row
+     * @param draft currently requested field settings
      */
-    private static void addPositionTooltip(final Pane pane, final FieldBiomeView field)
+    @SuppressWarnings("null")
+    private static void addPositionTooltip(final Pane pane, final FieldBiomeView field, final DraftField draft)
     {
         final BlockPos position = field.position();
         final MutableComponent tooltip = Component.translatable(
@@ -717,9 +724,20 @@ public class WindowBiomeModule extends AbstractModuleWindow<GreenhouseBiomeModul
             position.getY(),
             position.getZ());
 
-        if (field.owned() && field.daysSinceLastMaintenance() >= 0)
+        if (draft.owned() && !isModified(field, draft.temperature(), draft.humidity()))
+        {
+            tooltip.append("\n").append(Component.translatable(
+                "com.greenhousegardener.core.gui.biome.maintenance_not_required"));
+        }
+        else if (field.owned() && field.daysSinceLastMaintenance() >= 0)
         {
             tooltip.append("\n").append(maintenanceTooltipLine(field.daysSinceLastMaintenance()));
+        }
+
+        if (field.invalidRoof())
+        {
+            tooltip.append("\n").append(Component.translatable(
+                "com.greenhousegardener.core.gui.biome.invalid_roof").withStyle(ChatFormatting.RED));
         }
 
         pane.setHoverPane(null);

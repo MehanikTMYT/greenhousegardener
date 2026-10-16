@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "greenhousegardener:aussie_spread"
-    },
-    {
-      "item": "minecraft:bread"
-    }
+    "greenhousegardener:aussie_spread",
+    "minecraft:bread"
   ],
   "result": {
     "id": "greenhousegardener:aussie_toast"

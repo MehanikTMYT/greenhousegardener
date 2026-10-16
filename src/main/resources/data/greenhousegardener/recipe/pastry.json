@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecolonies:butter"
-    },
-    {
-      "item": "minecolonies:durum"
-    },
-    {
-      "item": "minecolonies:large_water_bottle"
-    }
+    "minecolonies:butter",
+    "minecolonies:durum",
+    "minecolonies:large_water_bottle"
   ],
   "result": {
     "count": 2,
