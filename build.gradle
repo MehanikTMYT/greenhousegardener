@@ -143,6 +143,12 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+// Tests load building modules whose supertypes live in the optional LDT libraries.
+configurations {
+    testImplementation.extendsFrom compileOnly
+    testRuntimeOnly.extendsFrom localRuntime
+}
+
 tasks.named('test', Test).configure {
     useJUnitPlatform()
 }
