@@ -64,7 +64,9 @@ Dozens of new foods, ingredients, crafting recipes, and MineColonies Chef/Baker 
 
 The Ranch is a MineColonies worker building for land animals that are not assigned to one of the core animal-herding buildings. Its Rancher can feed, breed, butcher, shear, milk, and collect dropped products from datapack-designated species.
 
-Herd capacity is calculated separately for every exact entity type at two animals per building level. A level 3 Ranch can therefore maintain six deer and six boars independently rather than treating them as one combined herd.
+Herd capacity is calculated separately for every supported exact entity type at two animals per building level. The number of supported types is server-configurable from one through five (two by default), and Diverse Herds research adds one. Types claim support in first-seen order and relinquish it when every animal of that type leaves the Ranch. A fully upgraded Ranch using the defaults can therefore maintain ten animals of each of two types, or three types after research.
+
+When more managed animal types are present than the Ranch supports, the Rancher reports the overcrowding, suspends breeding, and continues non-breeding care and population control for supported herds. The Herds tab shows the animal and type limits and marks unsupported types in red. Breeding may temporarily take a supported herd one animal over capacity when butchering is enabled; the Rancher then prioritizes reducing it to capacity.
 
 The Rancher discovers breeding foods from each live animal's own `Animal.isFood` behavior. This allows compatible modded animals to work without a Java integration or a hard dependency. Species that do not expose any breeding food can still be butchered or provide renewable products when their capability tags permit it.
 
@@ -133,7 +135,7 @@ Avoid sealed display-only greenhouses where the worker can see the field but can
 
 ### Maintenance And Reversion
 
-Climate-changed fields require maintenance. If the worker cannot maintain a field because the roof is invalid or climate materials are unavailable, the field can eventually revert to its natural biome. The default missed-maintenance window is 5 colony days.
+Climate-changed fields require maintenance. If the worker cannot maintain a field because the roof is invalid or climate materials are unavailable, the field can eventually revert to its natural biome. The default missed-maintenance window is 5 colony days and can be extended with research.
 
 When a field reverts to its natural biome the seed will be unset from that farm field.
 
@@ -277,6 +279,25 @@ These define the item returned after a climate material is consumed, for items w
 ```
 
 Built-in item crafting remainders are used automatically before this datapack mapping is checked. For example, bucket-like items that already expose a crafting remainder do not need a custom remainder file.
+
+### Crop Product Mappings
+
+The Greenhouse Colony Crops tab reports how much of each field's normal product is stored across all colony warehouses. Planting items that differ from their harvested product can be mapped with datapack files under:
+
+```text
+data/<namespace>/greenhouse_crop_products/*.json
+```
+
+Each file maps one planting item to the product counted in warehouse storage:
+
+```json
+{
+  "seed": "examplemod:tomato_seeds",
+  "product": "examplemod:tomato"
+}
+```
+
+When no mapping exists, the selected planting item itself is counted. Greenhouse Gardener includes mappings for vanilla wheat, beetroot, pumpkin, melon, torchflower, and pitcher crops. A higher-priority datapack can replace a built-in mapping by overriding its resource path.
 
 ## Dependencies
 Minecraft version 1.21.1

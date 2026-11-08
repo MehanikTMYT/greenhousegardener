@@ -133,8 +133,8 @@ dependencies {
     localRuntime "com.ldtteam:domum-ornamentum:${domumornamentum_version}"
 
     // NOTE: the pre-port build.gradle declared compileOnly/localRuntime on JEI 1.21.1 CurseForge-style
-    // coordinates (mezz.jei:jei-1.21.1-neoforge*), but no source file in this mod imports any
-    // mezz.jei.* class (verified: zero matches for "jei" imports across src/main/java). Dropped here
+// синк/порт 26.1.2: JEI-зависимость удалена — политика EMI-only
+// синк/порт 26.1.2: JEI-зависимость удалена — политика EMI-only
     // rather than re-pinned to a 26.1.2 JEI/EMI coordinate, matching the precedent set in
     // ../warehouseWorkshop/build.gradle of not re-pinning unused dependencies onto wrong-version jars.
 
